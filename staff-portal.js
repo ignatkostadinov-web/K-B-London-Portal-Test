@@ -1,6 +1,9 @@
 const portalClient = window.portalAuth.client;
 const projectTable = document.querySelector('#project-rows');
 const projectDialog = document.querySelector('#project-dialog');
+const createProjectDialog = document.querySelector('#create-project-dialog');
+const createProjectForm = document.querySelector('#create-project-form');
+const createProjectMessage = document.querySelector('#create-project-message');
 const stageList = document.querySelector('#stage-list');
 const issueList = document.querySelector('#issue-list');
 const issueForm = document.querySelector('#issue-form');
@@ -31,6 +34,64 @@ function notify(message) {
   toast.classList.add('visible');
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 3500);
+}
+
+async function createProjectAndInviteCustomer(event) {
+  event.preventDefault();
+  if (!window.staffContext) {
+    notify('A signed-in staff account is required to create a project.');
+    return;
+  }
+
+  const submitButton = createProjectForm.querySelector('button[type="submit"]');
+  const cancelButton = document.querySelector('#cancel-create-project');
+  const closeButton = document.querySelector('#close-create-project');
+  const formData = new FormData(createProjectForm);
+  const project = {
+    clientName: formData.get('clientName').trim(),
+    email: formData.get('email').trim(),
+    title: formData.get('title').trim(),
+    reference: formData.get('reference').trim(),
+    kind: formData.get('kind'),
+    status: formData.get('status'),
+    startDate: formData.get('startDate'),
+    duration: formData.get('duration').trim(),
+    projectNote: formData.get('projectNote').trim()
+  };
+
+  submitButton.disabled = true;
+  cancelButton.disabled = true;
+  closeButton.disabled = true;
+  submitButton.textContent = 'Creating project…';
+  createProjectMessage.textContent = '';
+  try {
+    const { data, error } = await portalClient.functions.invoke('create-project-invitation', { body: project });
+    if (error) {
+      let message = error.message;
+      if (error.context instanceof Response) {
+        const responseBody = await error.context.clone().json();
+        if (typeof responseBody?.error === 'string') message = responseBody.error;
+      }
+      throw new Error(message);
+    }
+    if (data?.ok !== true) throw new Error('The invitation service returned an unexpected response.');
+
+    createProjectForm.reset();
+    createProjectDialog.close();
+    try {
+      await loadProjects();
+      notify('Project created and customer invitation sent.');
+    } catch (error) {
+      notify(`Project created and invitation sent, but the register could not refresh: ${error.message}`);
+    }
+  } catch (error) {
+    createProjectMessage.textContent = `Could not create the project and invite the customer: ${error.message}`;
+  } finally {
+    submitButton.disabled = false;
+    cancelButton.disabled = false;
+    closeButton.disabled = false;
+    submitButton.textContent = 'Create project & send invitation';
+  }
 }
 
 function statusLabel(status) {
@@ -606,6 +667,26 @@ filters.forEach((button) => button.addEventListener('click', () => {
   updateProjects();
 }));
 searchInput.addEventListener('input', updateProjects);
+document.querySelector('#open-create-project').addEventListener('click', () => {
+  createProjectMessage.textContent = '';
+  createProjectDialog.showModal();
+  document.querySelector('#new-client-name').focus();
+});
+document.querySelector('#close-create-project').addEventListener('click', () => createProjectDialog.close());
+document.querySelector('#cancel-create-project').addEventListener('click', () => createProjectDialog.close());
+createProjectDialog.addEventListener('click', (event) => {
+  if (event.target === createProjectDialog && !createProjectForm.querySelector('button[type="submit"]').disabled) {
+    createProjectDialog.close();
+  }
+});
+createProjectDialog.addEventListener('cancel', (event) => {
+  if (createProjectForm.querySelector('button[type="submit"]').disabled) event.preventDefault();
+});
+createProjectForm.addEventListener('submit', (event) => {
+  createProjectAndInviteCustomer(event).catch((error) => {
+    createProjectMessage.textContent = `Could not create the project and invite the customer: ${error.message}`;
+  });
+});
 document.querySelector('.dialog-close').addEventListener('click', () => projectDialog.close());
 projectDialog.addEventListener('click', (event) => {
   if (event.target === projectDialog) projectDialog.close();

@@ -118,6 +118,25 @@
     .dialog-heading h2 { margin: 0; font: 600 17px var(--font-display); }
     .dialog-heading p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
     .dialog-close { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--muted); font-size: 17px; cursor: pointer; }
+    .page-head-actions { display: flex; align-items: center; gap: 12px; }
+    .new-project-button { min-height: 40px; padding: 0 15px; border: 1px solid var(--gold); border-radius: 4px; background: var(--gold); color: var(--slate-dark); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .new-project-button:hover { background: var(--gold-bright); }
+    dialog.create-project-dialog { width: min(650px, calc(100vw - 28px)); max-height: min(90vh, 760px); padding: 0; overflow: hidden; border: 0; border-radius: 8px; box-shadow: 0 18px 60px #18231d35; }
+    dialog.create-project-dialog::backdrop { background: #1b282180; }
+    .create-project-layout { max-height: min(90vh, 760px); overflow: auto; }
+    .create-project-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 18px 22px 22px; }
+    .create-project-field { display: grid; align-content: start; gap: 5px; }
+    .create-project-field.full, .create-project-help, .create-project-message, .create-project-actions { grid-column: 1 / -1; }
+    .create-project-field label { font-size: 10px; font-weight: 700; }
+    .create-project-field input, .create-project-field select, .create-project-field textarea { width: 100%; min-height: 36px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); font: 11px/1.45 var(--font-body); }
+    .create-project-field textarea { min-height: 76px; resize: vertical; }
+    .create-project-field input:focus, .create-project-field select:focus, .create-project-field textarea:focus { outline: 2px solid #fffbeb; border-color: var(--gold); }
+    .create-project-help, .create-project-message { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .create-project-message:empty { display: none; }
+    .create-project-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .create-project-actions button { min-height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 4px; background: white; color: var(--ink); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .create-project-actions button[type="submit"] { border-color: var(--gold); background: var(--gold); color: var(--slate-dark); }
+    .create-project-actions button:disabled { cursor: wait; opacity: .65; }
     .project-status-edit { display: flex; align-items: center; gap: 10px; padding: 13px 22px; border-bottom: 1px solid var(--line); background: #f5f6f7; }
     .project-status-edit label { font-size: 10px; font-weight: 700; }
     .project-status-edit select, .stage-status select { min-height: 31px; padding: 0 9px; border: 1px solid var(--line); border-radius: 4px; background: white; color: var(--ink); font: 500 10px var(--font-body); }
@@ -222,6 +241,7 @@
       .brand-value { align-items: flex-start; flex-direction: column; gap: 5px; font-size: 9px; white-space: normal; }
       .page-head { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 16px; }
       .page-head h2 { font-size: 21px; }
+      .page-head-actions { align-items: flex-start; flex-wrap: wrap; }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 15px; }
       .metric { min-height: 69px; gap: 9px; padding: 10px; }
       .metric-mark { width: 29px; height: 29px; font-size: 13px; }
@@ -233,6 +253,8 @@
       table { min-width: 920px; }
       th, td { padding-right: 10px; padding-left: 10px; }
       .dialog-heading { padding-right: 14px; padding-left: 14px; }
+      .create-project-form { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
+      .create-project-field.full, .create-project-help, .create-project-message, .create-project-actions { grid-column: auto; }
       .project-status-edit { align-items: flex-start; flex-direction: column; padding: 12px 14px; }
       .storage-note { margin-left: 0; }
       .stage-list { padding: 12px 14px 16px; }
@@ -274,7 +296,7 @@
           </div>
         </section>
 
-        <section class="page-head" aria-labelledby="page-title"><div><p class="eyebrow">K&amp;B (Kitchens &amp; Bathrooms) London Limited · Operations</p><h2 id="page-title">Master project register</h2><p class="subtitle">A current view of every listed residential project.</p></div><span class="updated" id="register-summary">0 projects in register</span></section>
+        <section class="page-head" aria-labelledby="page-title"><div><p class="eyebrow">K&amp;B (Kitchens &amp; Bathrooms) London Limited · Operations</p><h2 id="page-title">Master project register</h2><p class="subtitle">A current view of every listed residential project.</p></div><div class="page-head-actions"><span class="updated" id="register-summary">0 projects in register</span><button class="new-project-button" id="open-create-project" type="button">Create New Project &amp; Invite Customer</button></div></section>
 
         <section class="metrics" aria-label="Project totals">
           <div class="metric"><span class="metric-mark" aria-hidden="true">▦</span><div><span class="metric-label">All projects</span><strong class="metric-value">0</strong></div></div>
@@ -391,6 +413,65 @@
           </div>
         </form>
       </section>
+    </div>
+  </dialog>
+  <dialog class="create-project-dialog" id="create-project-dialog" aria-labelledby="create-project-title">
+    <div class="create-project-layout">
+      <header class="dialog-heading">
+        <div><p class="eyebrow">Customer onboarding</p><h2 id="create-project-title">Create new project &amp; invite customer</h2><p>The customer will receive an email invitation linked to this project.</p></div>
+        <button class="dialog-close" id="close-create-project" type="button" aria-label="Close project invitation form">×</button>
+      </header>
+      <form class="create-project-form" id="create-project-form">
+        <div class="create-project-field">
+          <label for="new-client-name">Customer name</label>
+          <input id="new-client-name" name="clientName" required maxlength="120" autocomplete="name">
+        </div>
+        <div class="create-project-field">
+          <label for="new-client-email">Customer email</label>
+          <input id="new-client-email" name="email" type="email" required maxlength="254" autocomplete="email">
+        </div>
+        <div class="create-project-field full">
+          <label for="new-project-title">Project title</label>
+          <input id="new-project-title" name="title" required maxlength="160" placeholder="e.g. Main bathroom renovation">
+        </div>
+        <div class="create-project-field">
+          <label for="new-project-reference">Project reference</label>
+          <input id="new-project-reference" name="reference" maxlength="80" placeholder="Optional">
+        </div>
+        <div class="create-project-field">
+          <label for="new-project-kind">Project type</label>
+          <select id="new-project-kind" name="kind" required>
+            <option value="bathroom">Bathroom</option>
+            <option value="kitchen">Kitchen</option>
+          </select>
+        </div>
+        <div class="create-project-field">
+          <label for="new-project-status">Status</label>
+          <select id="new-project-status" name="status" required>
+            <option value="progress">In progress</option>
+            <option value="finishing">Finishing stages</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="create-project-field">
+          <label for="new-project-start-date">Start date</label>
+          <input id="new-project-start-date" name="startDate" type="date">
+        </div>
+        <div class="create-project-field full">
+          <label for="new-project-duration">Estimated duration</label>
+          <input id="new-project-duration" name="duration" maxlength="100" placeholder="e.g. 4–6 weeks">
+        </div>
+        <div class="create-project-field full">
+          <label for="new-project-note">Project notes</label>
+          <textarea id="new-project-note" name="projectNote" maxlength="1200" placeholder="Optional notes for the project record"></textarea>
+        </div>
+        <p class="create-project-help">The customer invitation is sent by Supabase. Customer access is restricted to the project created here.</p>
+        <p class="create-project-message" id="create-project-message" role="status" aria-live="polite"></p>
+        <div class="create-project-actions">
+          <button id="cancel-create-project" type="button">Cancel</button>
+          <button type="submit">Create project &amp; send invitation</button>
+        </div>
+      </form>
     </div>
   </dialog>
   <div class="dialog-toast" id="dialog-toast" role="status" aria-live="polite"></div>
