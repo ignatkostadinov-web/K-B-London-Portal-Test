@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f7f4">
   <title>K&amp;B (Kitchens &amp; Bathrooms) London Limited Operations Portal</title>
+  <script>
+    history.pushState({ stayOnLogin: true }, '', window.location.href);
+    window.addEventListener('popstate', () => {
+      history.pushState({ stayOnLogin: true }, '', window.location.href);
+    });
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
