@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2c3238">
+  <title>Sign in | K&amp;B London Limited</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; --ink: #1e2328; --muted: #69737c; --line: #dfe4e8; --paper: #f8faf9; --gold: #d49b00; --slate: #2c3238; --font-body: Inter, sans-serif; --font-display: "Playfair Display", serif; }
+    * { box-sizing: border-box; }
+    body { display: grid; min-height: 100vh; place-items: center; margin: 0; padding: 20px; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--font-body); }
+    main { width: min(100%, 430px); }
+    .card { padding: 30px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 14px 45px #20272312; }
+    [hidden] { display: none !important; }
+    .brand { display: flex; align-items: center; gap: 12px; margin: 0 0 24px; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #d49b00, #f3b41b); color: #1e2328; font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+    .brand-copy { display: flex; flex-direction: column; line-height: 1.1; }
+    .brand-copy strong { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+    .brand-copy small { color: var(--muted); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+    .eyebrow { margin: 0 0 5px; color: #805d00; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font: 600 27px/1.2 var(--font-display); }
+    .intro { margin: 8px 0 22px; color: var(--muted); font-size: 12px; }
+    .login-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .login-option { margin: 0; border-color: var(--line); background: #fff; }
+    .login-option[aria-pressed="true"] { border-color: var(--gold); background: #fff8e5; box-shadow: inset 0 0 0 1px var(--gold); }
+    label { display: block; margin: 13px 0 5px; font-size: 11px; font-weight: 700; }
+    input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 5px; background: white; color: var(--ink); font: 13px var(--font-body); }
+    input:focus { outline: 2px solid #d49b0038; border-color: var(--gold); }
+    button { width: 100%; min-height: 42px; margin-top: 18px; border: 1px solid var(--gold); border-radius: 5px; background: var(--gold); color: #1e2328; font: 700 12px var(--font-body); cursor: pointer; }
+    button:disabled { cursor: wait; opacity: .65; }
+    .secondary { margin-top: 11px; border-color: var(--line); background: #fff; }
+    .message { min-height: 20px; margin: 13px 0 0; color: var(--muted); font-size: 11px; }
+    .message.error { color: #9e2e2e; }
+    .message.success { color: #205b36; }
+    .notice { margin-top: 14px; padding: 10px; border: 1px solid #e5d8af; border-radius: 5px; background: #fffaf0; color: #66531d; font-size: 10px; }
+    @media (max-width: 480px) { .card { padding: 23px 19px; } h1 { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card" aria-labelledby="sign-in-title">
+      <div class="brand" aria-label="K&amp;B (Kitchens &amp; Bathrooms) London Limited">
+        <span class="brand-mark" aria-hidden="true">K&amp;B</span>
+        <span class="brand-copy"><strong>K&amp;B</strong><small>London</small></span>
+      </div>
+      <p class="eyebrow">Project portal</p>
+      <h1 id="sign-in-title">Sign in</h1>
+      <p class="intro" id="sign-in-intro">Choose your account type, then sign in with your invited account.</p>
+      <div class="login-options" id="login-options" aria-label="Choose login type">
+        <button class="login-option" type="button" data-role="staff" aria-pressed="false">Staff login</button>
+        <button class="login-option" type="button" data-role="client" aria-pressed="false">Customer login</button>
+      </div>
+      <form id="sign-in-form" hidden>
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="username" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button id="sign-in-button" type="submit">Sign in securely</button>
+      </form>
+      <button class="secondary" id="reset-password-button" type="button" hidden>Send password reset email</button>
+      <form id="new-password-form" hidden>
+        <label for="new-password">New password</label>
+        <input id="new-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required>
+        <button type="submit">Save new password</button>
+      </form>
+      <p class="message" id="auth-message" role="status" aria-live="polite"></p>
+      <p class="notice">Accounts are invitation-only. Staff access is controlled by your assigned role; customer accounts can see only the project assigned to them.</p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <script src="supabase/config.js"></script>
+  <script>
+    const message = document.querySelector('#auth-message');
+    const signInButton = document.querySelector('#sign-in-button');
+    const signInForm = document.querySelector('#sign-in-form');
+    const resetPasswordButton = document.querySelector('#reset-password-button');
+    const newPasswordForm = document.querySelector('#new-password-form');
+    const loginOptions = document.querySelector('#login-options');
+    const signInIntro = document.querySelector('#sign-in-intro');
+    const isPasswordRecovery = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+    let selectedRole = null;
+    const routeBase = window.location.pathname.slice(0, window.location.pathname.lastIndexOf('/') + 1);
+    const supabaseClient = window.supabase.createClient(
+      window.supabasePortalConfig.url,
+      window.supabasePortalConfig.publishableKey,
+      { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true } }
+    );
+
+    function showMessage(text, kind = '') {
+      message.textContent = text;
+      message.className = `message${kind ? ` ${kind}` : ''}`;
+    }
+
+    async function rejectSignedInAccount(reason) {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) throw new Error(`${reason} Sign-out failed: ${error.message}`);
+      throw new Error(reason);
+    }
+
+    async function routeSignedInUser(user) {
+      const { data: profile, error } = await supabaseClient
+        .from('profiles')
+        .select('role, project_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!profile) {
+        await rejectSignedInAccount('This account has not been assigned a portal role yet. Please contact the project team.');
+      }
+      if (profile.role !== selectedRole) {
+        await rejectSignedInAccount(`This is not a ${selectedRole === 'staff' ? 'staff' : 'customer'} account. Choose the matching login option and try again.`);
+      }
+      if (profile.role === 'staff') {
+        window.location.replace(`${routeBase}staff.html`);
+        return;
+      }
+      if (profile.role === 'client' && profile.project_id) {
+        window.location.replace(`${routeBase}index.html?project=${encodeURIComponent(profile.project_id)}`);
+        return;
+      }
+      await rejectSignedInAccount('This account has no project assignment. Please contact the project team.');
+    }
+
+    loginOptions.addEventListener('click', async (event) => {
+      const option = event.target.closest('[data-role]');
+      if (!option) return;
+      selectedRole = option.dataset.role;
+      loginOptions.querySelectorAll('[data-role]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button === option));
+      });
+      signInForm.hidden = false;
+      resetPasswordButton.hidden = false;
+      signInIntro.textContent = `Enter the email and password for your invited ${selectedRole === 'staff' ? 'staff' : 'customer'} account.`;
+      showMessage('');
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        showMessage('Could not check the current sign-in session.', 'error');
+        return;
+      }
+      if (data.session) {
+        try {
+          await routeSignedInUser(data.session.user);
+        } catch (routeError) {
+          showMessage(routeError.message, 'error');
+        }
+      }
+    });
+
+    if (isPasswordRecovery) {
+      document.querySelector('#sign-in-title').textContent = 'Choose a new password';
+      signInIntro.textContent = 'Choose a new password with at least 8 characters.';
+      loginOptions.hidden = true;
+      signInForm.hidden = true;
+      resetPasswordButton.hidden = true;
+      newPasswordForm.hidden = false;
+    }
+
+    signInForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      signInButton.disabled = true;
+      showMessage('Signing in…');
+      try {
+        const email = document.querySelector('#email').value.trim();
+        const password = document.querySelector('#password').value;
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await routeSignedInUser(data.user);
+      } catch (error) {
+        showMessage(error.message || 'Could not sign in. Please check your details and try again.', 'error');
+      } finally {
+        signInButton.disabled = false;
+      }
+    });
+
+    resetPasswordButton.addEventListener('click', async () => {
+      const email = document.querySelector('#email').value.trim();
+      if (!email) {
+        showMessage('Enter your email address first, then request a reset link.', 'error');
+        document.querySelector('#email').focus();
+        return;
+      }
+      try {
+        const redirectTo = `${window.location.origin}${routeBase}login.html`;
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) throw error;
+        showMessage('If this email belongs to an account, Supabase will send a password reset link.', 'success');
+      } catch (error) {
+        showMessage(error.message || 'Could not send a password reset email.', 'error');
+      }
+    });
+
+    newPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const newPassword = document.querySelector('#new-password').value;
+      try {
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        const { error: signOutError } = await supabaseClient.auth.signOut();
+        if (signOutError) {
+          showMessage(`Password updated, but sign-out failed: ${signOutError.message}. Close this browser tab before signing in again.`, 'error');
+          return;
+        }
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+        newPasswordForm.hidden = true;
+        signInForm.hidden = false;
+        resetPasswordButton.hidden = false;
+        document.querySelector('#sign-in-title').textContent = 'Sign in';
+        loginOptions.hidden = false;
+        signInIntro.textContent = 'Choose your account type, then sign in with your invited account.';
+        showMessage('Password updated. Sign in with your new password.', 'success');
+      } catch (error) {
+        showMessage(error.message || 'Could not update your password.', 'error');
+      }
+    });
+
+    supabaseClient.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        showMessage('Could not check the current sign-in session.', 'error');
+        return;
+      }
+      if (data.session && isPasswordRecovery) {
+        newPasswordForm.hidden = false;
+      } else if (data.session && !isPasswordRecovery && selectedRole) {
+        routeSignedInUser(data.session.user).catch((routeError) => showMessage(routeError.message, 'error'));
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2c3238">
+  <title>Your project | K&amp;B (Kitchens &amp; Bathrooms) London Limited</title>
+  <style>[data-private-page] { visibility: hidden; }</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1e2328;
+      --muted: #69737c;
+      --line: #dfe4e8;
+      --paper: #f8faf9;
+      --white: #fff;
+      --green: #2c3238;
+      --green-soft: #fffbeb;
+      --coral: #d49b00;
+      --blue: #f3b41b;
+      --gold: #d49b00;
+      --gold-bright: #f3b41b;
+      --slate: #2c3238;
+      --slate-dark: #1e2328;
+      --font-body: 'Inter', sans-serif;
+      --font-display: 'Playfair Display', serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--font-body); }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 236px minmax(0, 1fr); }
+    .sidebar { display: flex; flex-direction: column; min-height: 100vh; padding: 27px 18px 20px; background: var(--slate); color: #fff; border-right: 1px solid #3a4249; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 9px 31px; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 8px; background: linear-gradient(135deg, #d49b00, #f3b41b); color: var(--slate-dark); font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+    .brand-copy { display: flex; flex-direction: column; line-height: 1.1; }
+    .brand-copy strong { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+    .brand-copy small { color: #b9c1c6; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+    .side-label { margin: 0 10px 9px; color: #aab2b8; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .nav { display: grid; gap: 4px; }
+    .nav a { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 0 11px; border-radius: 6px; color: #c1c8cd; text-decoration: none; font-weight: 500; }
+    .nav a.active { background: var(--gold); color: var(--slate-dark); font-weight: 700; }
+    .nav-icon { width: 18px; text-align: center; font-size: 16px; }
+    .side-project { margin-top: 31px; }
+    .project-switch { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #4a5259; border-radius: 6px; background: var(--slate-dark); color: #fff; text-align: left; cursor: pointer; }
+    .project-thumb { display: grid; place-items: center; width: 39px; height: 39px; flex: 0 0 auto; border-radius: 4px; background: var(--gold); color: var(--slate-dark); font-size: 10px; font-weight: 700; }
+    .project-switch strong { display: block; font-size: 12px; }
+    .project-switch small { color: #b9c1c6; font-size: 10px; }
+    .project-arrow { margin-left: auto; color: #b9c1c6; }
+    .help-card { margin-top: auto; padding: 14px 12px; background: var(--slate-dark); border: 1px solid #3a4249; border-radius: 6px; }
+    .help-card strong { display: block; margin-bottom: 4px; color: #fff; font-size: 12px; }
+    .help-card p { margin: 0 0 10px; color: #b9c1c6; font-size: 11px; }
+    .text-button { padding: 0; border: 0; background: none; color: var(--gold-bright); font-weight: 700; font-size: 11px; cursor: pointer; }
+    .account { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 14px 6px 0; border-top: 1px solid #4a5259; }
+    .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: var(--slate-dark); font-weight: 700; font-size: 11px; }
+    .account strong { display: block; color: #fff; font-size: 11px; }
+    .account small { color: #b9c1c6; font-size: 10px; }
+    main { min-width: 0; padding: 0 42px 50px; }
+    .topbar { min-height: 86px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 2px solid var(--gold); background: var(--slate); }
+    .crumb { display: grid; gap: 2px; color: #fff; }
+    .welcome-kicker { color: var(--gold-bright); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .welcome-title { font: 600 clamp(20px, 2vw, 26px)/1.15 var(--font-display); }
+    .top-actions { display: flex; align-items: center; gap: 14px; }
+    .demo-banner { margin: 13px 0 0; padding: 9px 12px; border: 1px solid #e5d8af; border-radius: 5px; background: #fffaf0; color: #66531d; font-size: 10px; }
+    .demo-banner strong { color: #493a13; }
+    .updated { color: #c2c8cd; font-size: 11px; }
+    .staff-preview-link { color: var(--gold-bright); font-size: 10px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .notification-link { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 10px; border: 1px solid #596168; border-radius: 18px; background: #363e45; color: #fff; font-size: 10px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .notification-link:hover { border-color: var(--gold-bright); background: #404950; }
+    .notification-mark { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 0 3px #f3b41b26; }
+    .icon-button { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #626a70; border-radius: 50%; background: #1e2328; color: #fff; cursor: pointer; }
+    .icon-button .dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border: 1px solid white; border-radius: 50%; background: var(--coral); }
+    .content { max-width: 1120px; margin: 0 auto; }
+    .brand-promise { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; overflow: hidden; margin: 25px 0 0; padding: 22px 25px; border: 1px solid #d9d1b9; border-radius: 9px; background: linear-gradient(115deg, #fff 0%, #fffdf7 58%, #f4ecd5 100%); box-shadow: 0 10px 28px #2027230a; }
+    .brand-promise::after { position: absolute; top: -105px; right: 165px; width: 235px; height: 235px; border: 1px solid #d49b0026; border-radius: 50%; box-shadow: 0 0 0 22px #d49b0008, 0 0 0 45px #d49b0006; content: ''; pointer-events: none; }
+    .brand-promise-copy, .brand-promise-values { position: relative; z-index: 1; }
+    .brand-promise-kicker { display: flex; align-items: center; gap: 8px; margin: 0 0 7px; color: #805d00; font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .brand-promise-kicker::before { width: 18px; height: 2px; background: var(--gold); content: ''; }
+    .brand-promise h2 { max-width: 660px; margin: 0; color: var(--slate-dark); font: 600 clamp(22px, 2.7vw, 32px)/1.12 var(--font-display); letter-spacing: -.02em; }
+    .brand-promise-copy > p:last-child { max-width: 720px; margin: 9px 0 0; color: #59636a; font-size: 11px; line-height: 1.7; }
+    .brand-promise-values { display: grid; gap: 7px; min-width: 195px; }
+    .brand-promise-value { display: flex; align-items: center; gap: 8px; color: var(--slate-dark); font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .brand-promise-mark { display: grid; place-items: center; width: 23px; height: 23px; flex: 0 0 auto; border: 1px solid #e5d8af; border-radius: 50%; background: #fff; color: #805d00; font-size: 11px; }
+    .heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin: 27px 0 17px; }
+    .eyebrow { margin: 0 0 5px; color: #946b00; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; font: 600 25px/1.25 var(--font-display); letter-spacing: 0; }
+    .subheading { margin: 0; color: var(--muted); font-size: 12px; }
+    .button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 38px; padding: 0 13px; border: 1px solid var(--line); border-radius: 5px; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .button.primary { border-color: var(--gold); background: var(--gold); color: var(--slate-dark); }
+    .button:hover { filter: brightness(.97); }
+    .overview { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .progress-panel { position: relative; display: flex; flex-direction: column; overflow: hidden; padding: 19px 20px 16px; border: 1px solid #d9d1b9; border-radius: 9px; background: linear-gradient(115deg, #fff 0%, #fffdf7 65%, #f4ecd5 100%); box-shadow: 0 10px 28px #2027230a; }
+    .progress-panel::after { position: absolute; top: -100px; right: 8%; width: 240px; height: 240px; border: 1px solid #d49b0020; border-radius: 50%; box-shadow: 0 0 0 22px #d49b0008, 0 0 0 45px #d49b0005; content: ''; pointer-events: none; }
+    .panel-heading, .project-progress { position: relative; z-index: 1; }
+    .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    h2 { margin-bottom: 3px; font: 600 15px var(--font-display); letter-spacing: 0; }
+    .panel-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #eed99a; border-radius: 20px; background: var(--green-soft); color: #695000; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .status-pill i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+    .project-progress { margin-top: 17px; }
+    .progress-meter-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 7px; }
+    .progress-meter-heading span { color: var(--muted); font-size: 10px; font-weight: 600; }
+    .progress-meter-heading strong { color: var(--slate-dark); font: 700 27px/1 var(--font-display); }
+    .progress-track { height: 11px; overflow: hidden; border: 1px solid #e0d6b8; border-radius: 10px; background: #eee9dc; }
+    .progress-track > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c58c00, #f3b41b); transition: width .35s ease; }
+    .progress-summary { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
+    .project-facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 15px; padding-top: 12px; border-top: 1px solid #e6e0d1; }
+    .project-fact { display: flex; gap: 7px; align-items: baseline; font-size: 10px; }
+    .project-fact span { color: var(--muted); }
+    .project-fact strong { text-align: right; }
+    .latest-update-card { display: flex; align-items: center; gap: 13px; margin-top: 12px; padding: 13px 15px; border: 1px solid #e6d59f; border-radius: 8px; background: #fffaf0; color: var(--ink); text-decoration: none; box-shadow: 0 5px 18px #20272308; transition: transform .15s ease, box-shadow .15s ease; }
+    .latest-update-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px #20272312; }
+    .latest-update-card[hidden] { display: none; }
+    .latest-update-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%; background: var(--gold); color: var(--slate-dark); font-size: 16px; }
+    .latest-update-copy { min-width: 0; flex: 1; }
+    .latest-update-kicker { display: block; margin-bottom: 2px; color: #805d00; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .latest-update-title { display: block; overflow: hidden; font: 600 12px var(--font-display); text-overflow: ellipsis; white-space: nowrap; }
+    .latest-update-note { display: block; overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .latest-update-cta { flex: 0 0 auto; color: #805d00; font-size: 10px; font-weight: 700; }
+    .next-step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, .55fr); gap: 18px; align-items: center; margin-top: 13px; padding: 16px 18px; border: 1px solid #d9d1b9; border-radius: 8px; background: #fff; }
+    .next-step-kicker { display: block; margin-bottom: 4px; color: #805d00; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .next-step h2 { margin: 0 0 3px; font: 600 16px var(--font-display); }
+    .next-step p { margin: 0; color: var(--muted); font-size: 10px; }
+    .next-step-date { padding: 10px 12px; border-radius: 5px; background: #f7f8f5; color: var(--muted); font-size: 9px; }
+    .next-step-date strong { display: block; margin-top: 2px; color: var(--ink); font-size: 11px; }
+    .decisions { margin: 24px 0 0; padding: 17px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .decisions-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 11px; }
+    .decisions-head h2 { margin: 0 0 3px; }
+    .decisions-head p { margin: 0; color: var(--muted); font-size: 10px; }
+    .decision-list { display: grid; gap: 9px; }
+    .decision-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; padding: 13px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .decision-card h3 { margin: 0 0 5px; font: 600 13px var(--font-display); }
+    .decision-card p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .decision-meta { display: grid; align-content: start; justify-items: end; gap: 7px; }
+    .decision-state { display: inline-flex; padding: 4px 8px; border-radius: 12px; background: #f7efdf; color: #755016; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .decision-state.approved { background: #e5f2e9; color: #205b36; }
+    .decision-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .decision-actions button { min-height: 31px; padding: 0 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); font-size: 9px; font-weight: 700; cursor: pointer; }
+    .decision-actions button.primary { border-color: var(--gold); background: var(--gold); color: var(--slate-dark); }
+    .decision-empty { margin: 0; padding: 10px; border-radius: 5px; background: #f7f8f5; color: var(--muted); font-size: 10px; }
+    .local-demo-note { margin: 12px 0 0; color: var(--muted); font-size: 9px; }
+    .client-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .client-stage { min-width: 0; border: 1px solid var(--line); border-top: 3px solid #cbd1d5; border-radius: 7px; background: #fff; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .client-stage.complete { border-top-color: #287247; }
+    .client-stage.in-progress { border: 1px solid #d9ad45; border-top: 4px solid #c58c00; background: linear-gradient(145deg, #fffdf7, #fff8e5); box-shadow: 0 5px 16px #9a6b001a; }
+    .client-stage.complete.expanded { box-shadow: 0 5px 16px #28724712; }
+    .client-stage.in-progress.expanded { box-shadow: 0 7px 20px #9a6b0020; }
+    .client-stage-toggle { display: flex; width: 100%; min-height: 112px; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+    .client-stage-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; }
+    .client-stage-heading, .client-stage-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .client-stage-number { display: block; margin-bottom: 5px; color: #936900; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+    .client-stage-title { display: block; font: 600 11px/1.35 var(--font-display); }
+    .client-stage-state { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid #dfe4e8; border-radius: 12px; background: #f1f3f4; color: #59636a; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .client-stage-state.complete { border-color: #b8d6c0; background: #e7f2e9; color: #205b36; }
+    .client-stage-state.complete::before { content: '✓'; font-size: 10px; }
+    .client-stage-state.active { border-color: #e2c77f; background: #f9edc9; color: #6b4c00; }
+    .client-stage-state.active::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ''; }
+    .client-stage-photos, .client-stage-chevron { color: var(--muted); font-size: 9px; }
+    .client-stage-chevron { font-size: 14px; transition: transform .15s ease; }
+    .client-stage-toggle[aria-expanded="true"] .client-stage-chevron { transform: rotate(180deg); }
+    .client-stage.expanded { grid-column: 1 / -1; }
+    .client-stage-details { padding: 0 12px 12px; }
+    .client-stage-details[hidden] { display: none; }
+    .client-stage-note, .client-stage-empty { margin: 0; color: var(--muted); font-size: 11px; }
+    .client-stage-note { margin-bottom: 10px; }
+    .client-stage-photo-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 9px; margin-top: 12px; }
+    .client-stage-photo-gallery figure { min-width: 0; margin: 0; }
+    .client-stage-photo-gallery img { display: block; width: 100%; height: clamp(180px, 25vw, 320px); border-radius: 4px; background: #eff2ee; object-fit: contain; }
+    .client-stage-photo-gallery figcaption { margin-top: 5px; color: var(--muted); font-size: 10px; }
+    .progress-foot { margin-top: auto; padding: 12px 10px; border-radius: 4px; background: var(--green-soft); color: var(--muted); font-size: 10px; }
+    .progress-foot strong { color: var(--green); font-size: 11px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin: 29px 0 13px; }
+    .section-head h2 { margin: 0; font-size: 15px; }
+    .section-head a { color: var(--green); text-decoration: none; font-size: 11px; font-weight: 700; }
+    .lower-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .85fr); gap: 17px; }
+    .updates { min-height: 191px; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: white; }
+    .empty-log { display: grid; min-height: 190px; align-content: center; justify-items: center; padding: 24px; text-align: center; }
+    .empty-log-mark { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 10px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-size: 15px; }
+    .empty-log strong { margin-bottom: 4px; font-size: 12px; }
+    .empty-log p { max-width: 310px; margin: 0; color: var(--muted); font-size: 11px; }
+    .client-log-list { display: grid; }
+    .client-log-entry { padding: 15px; }
+    .client-log-entry + .client-log-entry { border-top: 1px solid var(--line); }
+    .client-log-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 7px; }
+    .client-log-head strong { font: 600 12px var(--font-display); }
+    .client-log-head span { color: var(--muted); font-size: 9px; }
+    .client-log-status { display: inline-flex; margin-bottom: 7px; padding: 3px 7px; border-radius: 14px; background: var(--green-soft); color: var(--green); font-size: 9px; font-weight: 700; }
+    .client-log-entry p { margin: 0; color: var(--muted); font-size: 11px; }
+    .client-log-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
+    .client-log-photos img { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 4px; background: #eff2ee; object-fit: cover; }
+    .project-gallery { margin: 0 0 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+    .project-gallery summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 15px; color: var(--ink); font: 600 13px var(--font-display); cursor: pointer; list-style: none; }
+    .project-gallery summary::-webkit-details-marker { display: none; }
+    .project-gallery summary::after { color: var(--muted); font: 14px var(--font-body); content: '+'; }
+    .project-gallery[open] summary::after { content: '−'; }
+    .project-gallery summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; }
+    .project-gallery-label { display: grid; gap: 3px; }
+    .project-gallery-date { color: var(--muted); font: 10px var(--font-body); }
+    .project-gallery-content { padding: 0 15px 15px; }
+    .project-gallery-content > p { margin: 0 0 12px; color: var(--muted); font-size: 11px; }
+    .prestart-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .prestart-photos figure { margin: 0; }
+    .prestart-photos img { display: block; width: 100%; max-height: 440px; border-radius: 4px; background: #eff2ee; object-fit: contain; }
+    .prestart-photos figcaption { margin-top: 5px; color: var(--muted); font-size: 10px; }
+    .design-documents { display: grid; gap: 9px; }
+    .design-document { overflow: hidden; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+    .design-document summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; color: var(--ink); font: 600 11px var(--font-display); cursor: pointer; list-style: none; }
+    .design-document summary::-webkit-details-marker { display: none; }
+    .design-document summary::after { color: var(--muted); font: 14px var(--font-body); content: '+'; }
+    .design-document[open] summary::after { content: '−'; }
+    .design-document summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; }
+    .design-document-preview { padding: 0 12px 12px; }
+    .design-document-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 9px; }
+    .design-document-link { display: inline-flex; align-items: center; min-height: 30px; padding: 0 9px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); font-size: 10px; font-weight: 700; text-decoration: none; }
+    .design-document-link.primary { border-color: var(--gold); background: var(--gold); color: var(--slate-dark); }
+    .design-document-preview iframe { display: block; width: 100%; height: min(72vh, 680px); border: 1px solid var(--line); border-radius: 4px; background: #f4f5f3; }
+    .update { display: grid; grid-template-columns: 54px minmax(0, 1fr) 90px; gap: 14px; align-items: start; padding: 16px; }
+    .update + .update { border-top: 1px solid var(--line); }
+    .date-block { padding: 7px 5px; border-radius: 4px; background: #f5f6f3; text-align: center; }
+    .date-block strong { display: block; font: 700 15px var(--font-display); }
+    .date-block span { color: var(--muted); font-size: 9px; text-transform: uppercase; }
+    .update h3 { margin: 1px 0 4px; font: 600 12px var(--font-display); }
+    .update p { margin: 0; color: var(--muted); font-size: 11px; }
+    .update-photo { width: 90px; height: 63px; border-radius: 4px; object-fit: cover; }
+    .schedule { padding: 17px; border: 1px solid var(--line); border-radius: 7px; background: white; }
+    .schedule-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .schedule-title h2 { margin: 0; }
+    .calendar-mark { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 5px; background: var(--green-soft); color: #946b00; font-size: 14px; }
+    .schedule-event { display: flex; gap: 11px; padding: 11px 0; border-top: 1px solid var(--line); }
+    .schedule-event:first-of-type { border-top: 0; }
+    .event-date { min-width: 41px; color: var(--green); font-weight: 700; font-size: 10px; }
+    .event-copy strong { display: block; font-size: 11px; }
+    .event-copy span { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .schedule-note { margin: 9px 0 0; padding: 9px 10px; border-radius: 4px; background: #f5f6f3; color: var(--muted); font-size: 10px; }
+    .mobile-nav { display: none; }
+    dialog { width: min(440px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: 8px; box-shadow: 0 18px 60px #18231d35; }
+    dialog::backdrop { background: #1b282180; }
+    .dialog-inner { padding: 23px; }
+    .dialog-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 18px; }
+    .dialog-head h2 { font-size: 18px; }
+    .close-button { border: 0; background: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+    label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 700; }
+    textarea { width: 100%; min-height: 115px; padding: 11px; border: 1px solid var(--line); border-radius: 5px; resize: vertical; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 14px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 3; padding: 12px 16px; border-radius: 5px; background: var(--ink); color: white; box-shadow: 0 8px 25px #20272330; font-size: 12px; opacity: 0; transform: translateY(8px); transition: .2s ease; pointer-events: none; }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 206px minmax(0, 1fr); }
+      main { padding-right: 25px; padding-left: 25px; }
+      .brand-promise { gap: 18px; padding: 20px; }
+      .brand-promise-values { min-width: 178px; }
+      .overview, .lower-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .app { display: block; padding-bottom: 61px; }
+      .sidebar { display: none; }
+      main { padding: 0 17px 32px; }
+      .topbar { min-height: 68px; }
+      .updated { display: none; }
+      .brand-promise { grid-template-columns: 1fr; gap: 15px; margin-top: 18px; padding: 19px; }
+      .brand-promise::after { top: -135px; right: -75px; }
+      .brand-promise h2 { max-width: 440px; font-size: 26px; }
+      .brand-promise-copy > p:last-child { font-size: 10px; }
+      .brand-promise-values { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; min-width: 0; }
+      .next-step { grid-template-columns: 1fr; gap: 10px; padding: 13px; }
+      .decisions { padding: 13px; }
+      .decisions-head { flex-direction: column; }
+      .brand-promise-value { align-items: flex-start; flex-direction: column; gap: 5px; font-size: 8px; white-space: normal; }
+      .welcome-kicker { font-size: 8px; }
+      .welcome-title { font-size: 20px; }
+      .heading { align-items: start; margin: 23px 0 17px; }
+      h1 { font-size: 22px; }
+      .heading .button { min-height: 35px; padding: 0 10px; font-size: 10px; }
+      .overview, .lower-grid { grid-template-columns: 1fr; }
+      .top-actions { gap: 8px; }
+      .staff-preview-link { display: inline; font-size: 8px; }
+      .progress-panel { min-height: 0; }
+      .prestart-photos { grid-template-columns: 1fr; }
+      .client-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-head { margin-top: 23px; }
+      .update { grid-template-columns: 47px minmax(0,1fr) 67px; gap: 10px; padding: 13px 11px; }
+      .update-photo { width: 67px; height: 58px; }
+      .mobile-nav { position: fixed; z-index: 2; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(3, 1fr); padding: 7px 8px max(7px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #fff; }
+      .mobile-nav a { display: grid; justify-items: center; gap: 1px; padding: 3px; color: var(--muted); text-decoration: none; font-size: 9px; }
+      .mobile-nav a.active { color: var(--green); font-weight: 700; }
+      .mobile-nav span:first-child { font-size: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body data-private-page>
+  <div class="app">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand" aria-label="K&amp;B (Kitchens &amp; Bathrooms) London Limited">
+        <span class="brand-mark" aria-hidden="true">K&amp;B</span>
+        <span class="brand-copy"><strong>K&amp;B</strong><small>London</small></span>
+      </div>
+      <p class="side-label">Your account</p>
+      <nav class="nav">
+        <a class="active" href="#overview"><span class="nav-icon" aria-hidden="true">▦</span>Project overview</a>
+        <a href="#progress"><span class="nav-icon" aria-hidden="true">◷</span>Project progress</a>
+        <a href="#updates"><span class="nav-icon" aria-hidden="true">▤</span>Daily site log</a>
+      </nav>
+      <div class="side-project">
+        <p class="side-label">Current project</p>
+        <button class="project-switch" type="button" aria-label="Current project">
+        <span class="project-thumb" aria-hidden="true">K&amp;B</span><span><strong id="sidebar-project-title">Your project</strong><small>Project dashboard</small></span><span class="project-arrow" aria-hidden="true">⌄</span>
+        </button>
+      </div>
+      <div class="help-card"><strong>Need a hand?</strong><p>Your project coordinator is here to help.</p><button class="text-button message-trigger" type="button">Send a message <span aria-hidden="true">→</span></button></div>
+      <div class="account"><div class="avatar" id="client-avatar" aria-hidden="true">KB</div><div><strong id="sidebar-client-name">Customer</strong><small>Client account</small></div></div>
+    </aside>
+
+    <main id="overview">
+      <header class="topbar"><div class="crumb"><span class="welcome-kicker">YOUR PROJECT, MADE CLEAR</span><strong class="welcome-title" id="welcome-title">Welcome to your project</strong></div><div class="top-actions"><a class="notification-link" id="top-update-link" href="#updates" hidden><span class="notification-mark" aria-hidden="true"></span>Project update</a><button class="icon-button message-trigger" type="button" aria-label="Message your project coordinator" title="Message your project coordinator"><span aria-hidden="true">✉</span></button><button class="staff-preview-link" id="portal-sign-out" type="button">Sign out</button></div></header>
+      <div class="content">
+        <p class="demo-banner" hidden id="portal-error" role="alert"></p>
+        <section class="brand-promise" aria-labelledby="brand-promise-title">
+          <div class="brand-promise-copy">
+            <p class="brand-promise-kicker">K&amp;B (Kitchens &amp; Bathrooms) London Limited</p>
+            <h2 id="brand-promise-title">Restoring trust in home renovations.</h2>
+            <p>Your home deserves clear communication, craftsmanship without compromise, and complete respect at every step. We make your renovation feel reassuring, transparent and properly cared for.</p>
+          </div>
+          <div class="brand-promise-values" aria-label="Our promise">
+            <div class="brand-promise-value"><span class="brand-promise-mark" aria-hidden="true">✓</span><span>Total transparency</span></div>
+            <div class="brand-promise-value"><span class="brand-promise-mark" aria-hidden="true">✦</span><span>Uncompromised craft</span></div>
+            <div class="brand-promise-value"><span class="brand-promise-mark" aria-hidden="true">⌂</span><span>Respect for your home</span></div>
+          </div>
+        </section>
+        <section class="heading" aria-labelledby="page-title"><div><p class="eyebrow" id="project-reference"></p><h1 id="page-title">Your project</h1><p class="subheading" id="project-subheading">Your renovation, clearly tracked from first day to final finish.</p></div><button class="button message-trigger" type="button"><span aria-hidden="true">✉</span> Message the team</button></section>
+
+        <a class="latest-update-card" id="latest-update-card" href="#updates" hidden>
+          <span class="latest-update-icon" aria-hidden="true">↗</span>
+          <span class="latest-update-copy"><span class="latest-update-kicker">Latest project update</span><strong class="latest-update-title" id="latest-update-title"></strong><span class="latest-update-note" id="latest-update-note"></span></span>
+          <span class="latest-update-cta">View update&nbsp; →</span>
+        </a>
+
+        <section class="overview" aria-label="Project overview">
+          <section class="progress-panel" id="progress" aria-labelledby="progress-title">
+            <div class="panel-heading"><div><h2 id="progress-title">Current status</h2><p id="project-type-subtitle">Bathroom renovation</p></div><span class="status-pill"><i aria-hidden="true"></i>In progress</span></div>
+            <div class="project-progress">
+              <div class="progress-meter-heading"><span>Stage-based project progress</span><strong id="progress-percent">0%</strong></div>
+              <div class="progress-track" id="progress-track" role="progressbar" aria-label="Project progress by renovation stage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div>
+              <p class="progress-summary" id="progress-summary">Progress updates will appear here as stages are updated.</p>
+            </div>
+            <div class="project-facts">
+              <div class="project-fact" id="project-start-row"><span>Work started</span><strong id="project-start">Monday, 5 October 2026</strong></div>
+              <div class="project-fact" id="project-duration-row"><span>Scheduled window</span><strong id="project-duration">10 working days</strong></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="next-step" aria-labelledby="next-step-title">
+          <div><span class="next-step-kicker" id="next-step-kicker">Next on your project</span><h2 id="next-step-title">Loading your next stage…</h2><p id="next-step-copy">Your project team will keep this plan up to date.</p></div>
+          <div class="next-step-date"><span id="next-step-date-label">Target date</span><strong id="next-step-date">To be confirmed</strong></div>
+        </section>
+
+        <div class="section-head"><h2>Project timeline · 8 stages</h2><span class="updated" id="stage-summary">Stage updates appear as logged</span></div>
+        <section class="client-stages" id="client-stage-grid" aria-label="Renovation stage progress"></section>
+
+        <section class="decisions" aria-labelledby="decisions-title">
+          <div class="decisions-head"><div><h2 id="decisions-title">Decisions &amp; approvals</h2><p>Review project choices and respond when your team requests approval.</p></div></div>
+          <div class="decision-list" id="client-decision-list" aria-live="polite"><p class="decision-empty">Loading project decisions…</p></div>
+          <p class="local-demo-note">Only decisions shared by your project team appear here.</p>
+        </section>
+
+        <section class="project-gallery" id="client-files" hidden>
+          <h2>Shared project files</h2>
+          <div id="client-file-list"></div>
+        </section>
+
+        <div class="section-head" id="updates"><h2>Daily site log</h2></div>
+        <section class="lower-grid" aria-label="Project updates and schedule">
+          <div class="updates" id="client-site-log" aria-live="polite">
+            <div class="empty-log"><span class="empty-log-mark" aria-hidden="true">◷</span><strong>No daily entries yet</strong><p>Your project team can add site notes and photos here as work progresses.</p></div>
+          </div>
+          <aside class="schedule" aria-labelledby="schedule-title"><div class="schedule-title"><h2 id="schedule-title">Project details</h2><span class="calendar-mark" aria-hidden="true">▦</span></div>
+            <div class="schedule-event"><div class="event-date">TYPE</div><div class="event-copy"><strong id="detail-project-title">Your project</strong><span>Client · <span id="detail-client-name">Customer</span></span></div></div>
+            <div class="schedule-event" id="detail-start-row" hidden><div class="event-date">START</div><div class="event-copy"><strong id="detail-start"></strong><span>Work commenced</span></div></div>
+            <div class="schedule-event" id="detail-duration-row" hidden><div class="event-date">LENGTH</div><div class="event-copy"><strong id="detail-duration"></strong><span>Scheduled window</span></div></div>
+            <p class="schedule-note" id="detail-project-note">Site logs are open. Updates will appear here once shared by your project team.</p>
+          </aside>
+        </section>
+      </div>
+    </main>
+  </div>
+  <nav class="mobile-nav" aria-label="Mobile navigation"><a class="active" href="#overview"><span aria-hidden="true">▦</span><span>Overview</span></a><a href="#progress"><span aria-hidden="true">◷</span><span>Progress</span></a><a href="#updates"><span aria-hidden="true">▤</span><span>Updates</span></a></nav>
+
+  <dialog id="message-dialog" aria-labelledby="message-title">
+    <form class="dialog-inner" id="message-form">
+      <div class="dialog-head"><div><p class="eyebrow" id="dialog-client-project">Your project</p><h2 id="message-title">Message your project team</h2></div><button class="close-button" type="button" aria-label="Close message dialog">×</button></div>
+      <label for="message-text">How can we help?</label><textarea id="message-text" name="message" placeholder="Write your message to the project team..." required></textarea>
+      <div class="dialog-actions"><button class="button close-action" type="button">Cancel</button><button class="button primary" type="submit">Send message <span aria-hidden="true">→</span></button></div>
+    </form>
+  </dialog>
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <script src="supabase/config.js"></script>
+  <script src="supabase/portal.js"></script>
+  <script src="projects.js"></script>
+  <script src="client-portal.js"></script>
+  </body>
+</html>
