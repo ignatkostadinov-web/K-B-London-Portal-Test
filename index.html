@@ -35,11 +35,8 @@
     button { color: inherit; }
     .app { min-height: 100vh; display: grid; grid-template-columns: 236px minmax(0, 1fr); }
     .sidebar { display: flex; flex-direction: column; min-height: 100vh; padding: 27px 18px 20px; background: var(--slate); color: #fff; border-right: 1px solid #3a4249; }
-    .brand { display: flex; align-items: center; gap: 11px; padding: 0 9px 31px; }
-    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 8px; background: linear-gradient(135deg, #d49b00, #f3b41b); color: var(--slate-dark); font-size: 11px; font-weight: 800; letter-spacing: .06em; }
-    .brand-copy { display: flex; flex-direction: column; line-height: 1.1; }
-    .brand-copy strong { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
-    .brand-copy small { color: #b9c1c6; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+    .brand { padding: 0 9px 31px; }
+    .brand-logo { display: block; width: 100%; height: auto; border-radius: 3px; }
     .side-label { margin: 0 10px 9px; color: #aab2b8; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
     .nav { display: grid; gap: 4px; }
     .nav a { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 0 11px; border-radius: 6px; color: #c1c8cd; text-decoration: none; font-weight: 500; }
@@ -296,9 +293,8 @@
 <body data-private-page>
   <div class="app">
     <aside class="sidebar" aria-label="Main navigation">
-      <div class="brand" aria-label="K&amp;B (Kitchens &amp; Bathrooms) London Limited">
-        <span class="brand-mark" aria-hidden="true">K&amp;B</span>
-        <span class="brand-copy"><strong>K&amp;B</strong><small>London</small></span>
+      <div class="brand">
+        <img class="brand-logo" src="assets/kb-london-logo.png" alt="K&amp;B (Kitchens &amp; Bathrooms) London Limited">
       </div>
       <p class="side-label">Your account</p>
       <nav class="nav">
