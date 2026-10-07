@@ -11,40 +11,46 @@
   <style>
     :root { color-scheme: light; --ink: #1e2328; --muted: #69737c; --line: #dfe4e8; --paper: #f8faf9; --gold: #d49b00; --slate: #2c3238; --font-body: Inter, sans-serif; --font-display: "Playfair Display", serif; }
     * { box-sizing: border-box; }
-    body { display: grid; min-height: 100vh; place-items: center; margin: 0; padding: 20px; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--font-body); }
-    main { width: min(100%, 430px); }
-    .card { padding: 30px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 14px 45px #20272312; }
+    body { position: relative; isolation: isolate; display: grid; min-height: 100vh; min-height: 100svh; place-items: center; margin: 0; padding: 24px; overflow-x: hidden; background: #30363b; color: var(--ink); font: 14px/1.5 var(--font-body); }
+    .background-video { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; filter: brightness(.5); }
+    .background-overlay { position: fixed; inset: 0; z-index: -1; background: rgb(18 23 27 / 52%); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); pointer-events: none; }
+    main { width: min(100%, 500px); }
+    .card { padding: 36px; border: 1px solid rgb(255 255 255 / 55%); border-radius: 1rem; background: rgb(255 255 255 / 95%); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 25px 60px rgb(0 0 0 / 25%); text-align: center; }
     [hidden] { display: none !important; }
-    .brand { margin: 0 0 24px; }
+    .brand { margin: 0 0 22px; }
     .brand-logo { display: block; width: min(100%, 240px); height: auto; margin: 0 auto; border-radius: 3px; }
-    .eyebrow { margin: 0 0 5px; color: #805d00; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    .portal-caption { margin: 0 0 4px; color: #b48328; font-size: 14px; font-weight: 500; letter-spacing: .025em; }
-    h1 { margin: 0; font: 600 27px/1.2 var(--font-display); }
-    .intro { margin: 8px 0 22px; color: var(--muted); font-size: 12px; }
+    .portal-caption { margin: 0 0 7px; color: #946b1f; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { max-width: 420px; margin: 0 auto; font: 600 clamp(24px, 5vw, 32px)/1.2 var(--font-body); letter-spacing: -.035em; }
+    .intro { max-width: 380px; margin: 10px auto 22px; color: var(--muted); font-size: 13px; }
     .login-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
     .login-option { margin: 0; border-color: var(--line); background: #fff; }
     .login-option[aria-pressed="true"] { border-color: var(--gold); background: #fff8e5; box-shadow: inset 0 0 0 1px var(--gold); }
-    label { display: block; margin: 13px 0 5px; font-size: 11px; font-weight: 700; }
+    label { display: block; margin: 13px 0 5px; font-size: 11px; font-weight: 700; text-align: left; }
     input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 5px; background: white; color: var(--ink); font: 13px var(--font-body); }
     input:focus { outline: 2px solid #d49b0038; border-color: var(--gold); }
     button { width: 100%; min-height: 42px; margin-top: 18px; border: 1px solid var(--gold); border-radius: 5px; background: var(--gold); color: #1e2328; font: 700 12px var(--font-body); cursor: pointer; }
     button:disabled { cursor: wait; opacity: .65; }
     .secondary { margin-top: 11px; border-color: var(--line); background: #fff; }
-    .message { min-height: 20px; margin: 13px 0 0; color: var(--muted); font-size: 11px; }
+    .message { min-height: 20px; margin: 13px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
     .message.error { color: #9e2e2e; }
     .message.success { color: #205b36; }
-    .notice { margin-top: 14px; padding: 10px; border: 1px solid #e5d8af; border-radius: 5px; background: #fffaf0; color: #66531d; font-size: 10px; }
-    @media (max-width: 480px) { .card { padding: 23px 19px; } h1 { font-size: 24px; } }
+    .notice { margin: 16px 0 0; padding: 12px 14px; border: 1px solid #e5d8af; border-radius: 10px; background: rgb(255 250 240 / 90%); color: #66531d; font-size: 11px; text-align: center; }
+    @media (max-width: 480px) { body { padding: 16px; } .card { padding: 28px 20px; } .brand-logo { width: min(100%, 210px); } }
+    @media (prefers-reduced-motion: reduce) { .background-video { display: none; } }
   </style>
 </head>
 <body>
+  <video class="background-video" autoplay muted loop playsinline aria-hidden="true" tabindex="-1">
+    <source src="assets/background-renovation.mp4" type="video/mp4">
+  </video>
+  <div class="background-overlay" aria-hidden="true"></div>
   <main>
     <section class="card" aria-labelledby="sign-in-title">
       <div class="brand">
         <img class="brand-logo" src="assets/kb-london-logo.png" alt="K&amp;B (Kitchens &amp; Bathrooms) London Limited">
       </div>
-      <p class="portal-caption">Welcome to K&amp;B Operations &amp; Project Management System</p>
-      <h1 id="sign-in-title">Sign in</h1>
+      <p class="portal-caption">Sign in</p>
+      <h1 id="sign-in-title">Welcome to K&amp;B Operations &amp; Project Management System</h1>
       <p class="intro" id="sign-in-intro">Sign in to access your renovation project or management workspace.</p>
       <div class="login-options" id="login-options" aria-label="Choose login type">
         <button class="login-option" type="button" data-role="staff" aria-pressed="false">Staff login</button>
