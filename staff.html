@@ -108,6 +108,8 @@
     .footer-note { margin: 12px 2px 0; color: #818a83; font-size: 9px; }
     .project-open { padding: 5px 8px; border: 1px solid var(--gold); border-radius: 4px; background: var(--gold); color: var(--slate-dark); font-size: 9px; font-weight: 700; cursor: pointer; white-space: nowrap; }
     .project-open:hover { background: var(--gold-bright); }
+    .staff-project-message-trigger { position: relative; display: inline-flex; align-items: center; }
+    .staff-project-message-trigger.has-unread-message::after { width: 7px; height: 7px; flex: 0 0 7px; margin-left: 7px; border-radius: 50%; background: #d52f3e; box-shadow: 0 0 0 2px #fff; content: ''; }
     .client-preview { background: #fff; color: var(--slate); border-color: var(--line); }
     .project-actions { display: grid; justify-items: start; gap: 5px; }
     .client-preview { display: inline-block; text-decoration: none; }
@@ -669,6 +671,6 @@
   <script src="supabase/config.js"></script>
   <script src="supabase/portal.js"></script>
   <script src="projects.js"></script>
-  <script src="staff-portal.js?v=messages-20261008-2"></script>
+  <script src="staff-portal.js?v=message-notifications-20261008-1"></script>
   </body>
 </html>

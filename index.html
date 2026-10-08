@@ -89,6 +89,8 @@
     .notification-mark { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 0 3px #f3b41b26; }
     .icon-button { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #626a70; border-radius: 50%; background: #1e2328; color: #fff; cursor: pointer; }
     .icon-button .dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border: 1px solid white; border-radius: 50%; background: var(--coral); }
+    .message-trigger { position: relative; }
+    .message-trigger.has-unread-message::after { position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border: 2px solid #fff; border-radius: 50%; background: #d52f3e; box-shadow: 0 0 0 1px #d52f3e; content: ''; }
     .content { max-width: 1120px; margin: 0 auto; }
     .brand-promise { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; overflow: hidden; margin: 25px 0 0; padding: 22px 25px; border: 1px solid #d9d1b9; border-radius: 9px; background: linear-gradient(115deg, #fff 0%, #fffdf7 58%, #f4ecd5 100%); box-shadow: 0 10px 28px #2027230a; }
     .brand-promise::after { position: absolute; top: -105px; right: 165px; width: 235px; height: 235px; border: 1px solid #d49b0026; border-radius: 50%; box-shadow: 0 0 0 22px #d49b0008, 0 0 0 45px #d49b0006; content: ''; pointer-events: none; }
@@ -672,6 +674,6 @@
   <div class="toast" role="status" aria-live="polite"></div>
   <script src="supabase/portal.js"></script>
   <script src="projects.js"></script>
-  <script src="client-portal.js?v=messages-20261008-2"></script>
+  <script src="client-portal.js?v=message-notifications-20261008-1"></script>
   </body>
 </html>

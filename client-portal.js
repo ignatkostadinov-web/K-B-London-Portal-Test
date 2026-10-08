@@ -11,6 +11,8 @@ let refreshTimer;
 let subscribedProjectId;
 let currentClientProjectId;
 let currentClientUserId;
+let latestTeamMessageAt = '';
+let messageStorageWarningShown = false;
 let previousSnapshot;
 let initialProjectLoadComplete = false;
 let notificationCount = 0;
@@ -22,6 +24,70 @@ function showToast(message) {
   toast.classList.add('visible');
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 3200);
+}
+
+function clientMessageReadKey() {
+  return `portal-message-read:client:${currentClientUserId}:${currentClientProjectId}`;
+}
+
+function clientMessageReadAt() {
+  try {
+    return window.localStorage.getItem(clientMessageReadKey()) || '';
+  } catch (error) {
+    console.error('Could not read the saved message notification state.', error);
+    if (!messageStorageWarningShown) {
+      messageStorageWarningShown = true;
+      showToast('Unread message notifications could not be loaded in this browser.');
+    }
+    return '';
+  }
+}
+
+function messageTimeIsNewer(timestamp, previousTimestamp) {
+  if (!timestamp) return false;
+  if (!previousTimestamp) return true;
+  const time = Date.parse(timestamp);
+  const previousTime = Date.parse(previousTimestamp);
+  return time > previousTime || (time === previousTime && timestamp > previousTimestamp);
+}
+
+function updateClientMessageIndicator(messages = null) {
+  if (messages) {
+    latestTeamMessageAt = messages.reduce((latest, message) => (
+      message.sender_role === 'staff' && messageTimeIsNewer(message.created_at, latest)
+        ? message.created_at
+        : latest
+    ), latestTeamMessageAt);
+  }
+
+  let readAt = clientMessageReadAt();
+  if (messageDialog.open && messageTimeIsNewer(latestTeamMessageAt, readAt)) {
+    try {
+      window.localStorage.setItem(clientMessageReadKey(), latestTeamMessageAt);
+      readAt = latestTeamMessageAt;
+    } catch (error) {
+      console.error('Could not save the customer message notification state.', error);
+      if (!messageStorageWarningShown) {
+        messageStorageWarningShown = true;
+        showToast('Unread message notifications could not be saved in this browser.');
+      }
+    }
+  }
+
+  const hasUnreadMessage = messageTimeIsNewer(latestTeamMessageAt, readAt);
+  document.querySelectorAll('.message-trigger').forEach((button) => {
+    const baseLabel = button.dataset.messageBaseLabel
+      || button.getAttribute('aria-label')
+      || button.textContent.replace(/\s+/g, ' ').trim();
+    const baseTitle = button.dataset.messageBaseTitle || button.getAttribute('title') || '';
+    button.dataset.messageBaseLabel = baseLabel;
+    if (baseTitle) button.dataset.messageBaseTitle = baseTitle;
+    button.classList.toggle('has-unread-message', hasUnreadMessage);
+    button.setAttribute('aria-label', `${baseLabel}${hasUnreadMessage ? ' (new message)' : ''}`);
+    if (hasUnreadMessage) button.title = 'New message from your project team';
+    else if (baseTitle) button.title = baseTitle;
+    else button.removeAttribute('title');
+  });
 }
 
 function dateLabel(value) {
@@ -591,6 +657,7 @@ function renderMessages(messages) {
   }
   status.textContent = 'Messages are saved to your project and visible to the project team.';
   list.scrollTop = list.scrollHeight;
+  updateClientMessageIndicator(messages);
 }
 
 async function refreshClientMessages() {
@@ -716,6 +783,9 @@ notificationLink.addEventListener('click', () => {
   notificationLink.hidden = true;
   notificationLink.setAttribute('aria-label', 'Project updates');
   notificationLink.title = 'Project updates';
+});
+window.addEventListener('storage', (event) => {
+  if (event.key === clientMessageReadKey()) updateClientMessageIndicator();
 });
 function updateClientNavigation() {
   const activeHash = window.location.hash || '#overview';

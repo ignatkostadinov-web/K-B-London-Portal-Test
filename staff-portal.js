@@ -29,6 +29,9 @@ let editingIssueId = null;
 let editingDecisionId = null;
 let toastTimer;
 let staffMessageChannel;
+let incomingStaffMessageChannel;
+let latestIncomingMessageTimes = new Map();
+let messageStorageWarningShown = false;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -43,6 +46,122 @@ function notify(message) {
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 3500);
 }
+
+function staffMessageReadKey(projectId) {
+  return `portal-message-read:staff:${window.staffContext.user.id}:${projectId}`;
+}
+
+function staffMessageReadAt(projectId) {
+  try {
+    return window.localStorage.getItem(staffMessageReadKey(projectId)) || '';
+  } catch (error) {
+    console.error('Could not read the saved message notification state.', error);
+    if (!messageStorageWarningShown) {
+      messageStorageWarningShown = true;
+      notify('Unread message notifications could not be loaded in this browser.');
+    }
+    return '';
+  }
+}
+
+function isMessageTimeNewer(timestamp, previousTimestamp) {
+  if (!timestamp) return false;
+  if (!previousTimestamp) return true;
+  const time = Date.parse(timestamp);
+  const previousTime = Date.parse(previousTimestamp);
+  return time > previousTime || (time === previousTime && timestamp > previousTimestamp);
+}
+
+function staffHasUnreadMessage(projectId) {
+  const latestIncomingAt = latestIncomingMessageTimes.get(String(projectId));
+  return Boolean(latestIncomingAt && isMessageTimeNewer(latestIncomingAt, staffMessageReadAt(projectId)));
+}
+
+function updateStaffMessageIndicators() {
+  document.querySelectorAll('.staff-project-message-trigger').forEach((button) => {
+    const hasUnreadMessage = staffHasUnreadMessage(button.dataset.messageProjectId);
+    button.classList.toggle('has-unread-message', hasUnreadMessage);
+    button.setAttribute('aria-label', `Open ${button.dataset.projectLabel}${hasUnreadMessage ? ' (unread customer message)' : ''}`);
+    button.title = hasUnreadMessage ? 'Unread customer message' : '';
+  });
+}
+
+function configureStaffMessageIndicator(button, project) {
+  button.classList.add('staff-project-message-trigger');
+  button.dataset.messageProjectId = String(project.id);
+  button.dataset.projectLabel = `${project.client_name || 'customer'} project`;
+  updateStaffMessageIndicators();
+}
+
+function markStaffMessagesRead(projectId) {
+  const latestIncomingAt = latestIncomingMessageTimes.get(String(projectId));
+  if (!latestIncomingAt) return;
+  const readAt = staffMessageReadAt(projectId);
+  if (isMessageTimeNewer(latestIncomingAt, readAt)) {
+    try {
+      window.localStorage.setItem(staffMessageReadKey(projectId), latestIncomingAt);
+    } catch (error) {
+      console.error('Could not save the staff message notification state.', error);
+      if (!messageStorageWarningShown) {
+        messageStorageWarningShown = true;
+        notify('Unread message notifications could not be saved in this browser.');
+      }
+    }
+  }
+  updateStaffMessageIndicators();
+}
+
+function subscribeToIncomingStaffMessages() {
+  if (incomingStaffMessageChannel) portalClient.removeChannel(incomingStaffMessageChannel);
+  incomingStaffMessageChannel = portalClient
+    .channel('staff-incoming-project-messages')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'project_messages',
+      filter: 'sender_role=eq.client'
+    }, ({ new: message }) => {
+      const projectId = String(message.project_id);
+      if (!projectRows.has(projectId)) return;
+      if (isMessageTimeNewer(message.created_at, latestIncomingMessageTimes.get(projectId))) {
+        latestIncomingMessageTimes.set(projectId, message.created_at);
+        updateStaffMessageIndicators();
+      }
+    })
+    .subscribe((status, error) => {
+      if (status === 'SUBSCRIBED') {
+        refreshStaffIncomingMessages().catch((refreshError) => {
+          console.error('Could not refresh unread customer messages.', refreshError);
+          notify(`Could not refresh unread message notifications: ${refreshError.message}`);
+        });
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.error(`Staff incoming-message subscription ${status.toLocaleLowerCase()}.`, error);
+        notify('Live message notifications are unavailable. Refresh the page to check for new messages.');
+      }
+    });
+}
+
+async function refreshStaffIncomingMessages() {
+  const { data, error } = await portalClient.from('project_messages')
+    .select('project_id,created_at')
+    .eq('sender_role', 'client')
+    .order('created_at');
+  if (error) throw error;
+  data.forEach(({ project_id: projectId, created_at: createdAt }) => {
+    const id = String(projectId);
+    if (projectRows.has(id) && isMessageTimeNewer(createdAt, latestIncomingMessageTimes.get(id))) {
+      latestIncomingMessageTimes.set(id, createdAt);
+    }
+  });
+  updateStaffMessageIndicators();
+}
+
+window.addEventListener('storage', (event) => {
+  const userId = window.staffContext?.user.id;
+  if (userId && event.key?.startsWith(`portal-message-read:staff:${userId}:`)) {
+    updateStaffMessageIndicators();
+  }
+});
 
 async function createProjectAndInviteCustomer(event) {
   event.preventDefault();
@@ -207,6 +326,7 @@ function renderDashboard() {
     const status = element('span', `status ${project.status}`, statusLabel(project.status));
     const open = element('button', 'dashboard-open', 'Open project');
     open.type = 'button';
+    configureStaffMessageIndicator(open, project);
     open.addEventListener('click', () => {
       openProject(project).catch((error) => notify(`Could not open this project: ${error.message}`));
     });
@@ -269,6 +389,7 @@ function buildProjectRow(project) {
   const actions = element('div', 'project-actions');
   const open = element('button', 'project-open', 'Open project');
   open.type = 'button';
+  configureStaffMessageIndicator(open, project);
   open.addEventListener('click', () => {
     openProject(project).catch((error) => notify(`Could not open this project: ${error.message}`));
   });
@@ -296,6 +417,7 @@ async function loadProjectMessages(projectId) {
     .order('created_at', { ascending: false });
   if (error) throw error;
   renderProjectMessages(data.reverse());
+  if (projectDialog.open && activeProject?.id === projectId) markStaffMessagesRead(projectId);
 }
 
 function renderProjectMessages(messages) {
@@ -613,6 +735,7 @@ async function openProject(project) {
   await renderDecisions(decisions);
   await renderDocuments();
   renderProjectMessages(messages.data.reverse());
+  markStaffMessagesRead(project.id);
   subscribeToStaffMessages(project.id);
 }
 
@@ -828,28 +951,39 @@ async function saveDecision(event) {
 }
 
 async function loadProjects() {
-  const [projectsResult, updatesResult] = await Promise.all([
+  const [projectsResult, updatesResult, messagesResult] = await Promise.all([
     portalClient
       .from('projects')
       .select('id,title,client_name,reference,kind,status,project_note,start_date,duration')
       .order('created_at', { ascending: false }),
-    portalClient.from('stage_updates').select('project_id,stage_number,stage_name,status,planned_date')
+    portalClient.from('stage_updates').select('project_id,stage_number,stage_name,status,planned_date'),
+    portalClient.from('project_messages').select('project_id,created_at').eq('sender_role', 'client').order('created_at')
   ]);
   if (projectsResult.error) throw projectsResult.error;
   if (updatesResult.error) throw updatesResult.error;
+  if (messagesResult.error) throw messagesResult.error;
   projectTable.replaceChildren();
   projectRows.clear();
+  latestIncomingMessageTimes = new Map();
+  messagesResult.data.forEach(({ project_id: projectId, created_at: createdAt }) => {
+    const id = String(projectId);
+    if (isMessageTimeNewer(createdAt, latestIncomingMessageTimes.get(id))) {
+      latestIncomingMessageTimes.set(id, createdAt);
+    }
+  });
   stageUpdates = updatesResult.data;
   projectsResult.data.forEach(buildProjectRow);
   updateSummary();
   updateProjects();
   renderDashboard();
+  updateStaffMessageIndicators();
 }
 
 async function startStaffPortal() {
   window.staffContext = await window.portalAuth.requireRole('staff');
   if (!window.staffContext) return;
   await loadProjects();
+  subscribeToIncomingStaffMessages();
   document.body.style.visibility = 'visible';
 }
 
