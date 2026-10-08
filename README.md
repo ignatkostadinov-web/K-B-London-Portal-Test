@@ -3,7 +3,7 @@
 Staff and customer portal for renovation project updates. Private project data is read from Supabase, and project files are stored in a private Supabase Storage bucket.
 
 - `staff.html` and `staff-portal.js` provide the staff dashboard, searchable project register, and project workspace.
-- `index.html` and `client-portal.js` provide the customer project portal.
+- `index.html` and `client-portal.js` provide the customer project dashboard, progress, shared files, and approvals.
 - `projects.js` contains only the shared bathroom/kitchen stage labels.
 - `supabase/portal.js` checks the signed-in role before either private page is shown.
 

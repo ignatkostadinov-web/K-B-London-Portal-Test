@@ -3,8 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#2c3238">
+  <meta name="theme-color" content="#f8f7f4">
   <title>K&amp;B (Kitchens &amp; Bathrooms) London Limited Operations Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <script src="supabase/config.js"></script>
+  <script>
+    window.portalAuthClient = window.supabase.createClient(
+      window.supabasePortalConfig.url,
+      window.supabasePortalConfig.publishableKey,
+      { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true } }
+    );
+    window.portalAuthClient.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Could not check the current sign-in session.', error);
+        return;
+      }
+      if (!data.session?.user) window.location.replace('/login.html');
+    }).catch((error) => {
+      console.error('Could not check the current sign-in session.', error);
+    });
+  </script>
   <style>[data-private-page] { visibility: hidden; }</style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -288,104 +306,347 @@
       .mobile-nav span:first-child { font-size: 16px; }
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+    :root {
+      --paper: #f8f7f4;
+      --line: #e7e3dc;
+      --muted: #69737c;
+      --gold: #c18a25;
+      --gold-bright: #d8a33f;
+      --gold-soft: #fbf4e7;
+    }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; scroll-padding-top: 18px; }
+    body { min-height: 100vh; background: var(--paper); }
+    .app { grid-template-columns: 224px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; height: 100vh; min-height: 100vh; padding: 25px 16px 18px; background: #292f34; border-right: 0; }
+    .brand { padding: 0 8px 30px; }
+    .side-label { margin: 0 10px 9px; color: #adb5bb; font-size: 9px; }
+    .nav { gap: 5px; }
+    .nav a { min-height: 42px; font-size: 11px; }
+    .nav a:hover { background: #ffffff12; color: #fff; }
+    .nav a.active { background: var(--gold); color: #20252a; }
+    .side-project { margin-top: 26px; }
+    .project-switch { cursor: default; }
+    .project-switch strong { max-width: 122px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-thumb { background: var(--gold); }
+    .help-card { margin-top: auto; padding: 13px 11px; border-color: #ffffff20; border-radius: 7px; background: #20252a; }
+    .help-card p { line-height: 1.55; }
+    .text-button { color: var(--gold-bright); }
+    .account { margin-top: 14px; padding: 13px 5px 0; border-color: #ffffff24; }
+    .avatar { flex: 0 0 auto; background: #eee3d0; color: #51422c; }
+    .account strong { max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-sign-out { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 6px 2px; border: 0; border-top: 1px solid #ffffff24; background: none; color: #d6dadd; font-size: 11px; text-align: left; cursor: pointer; }
+    .sidebar-sign-out span { font-size: 16px; }
+    main { min-width: 0; padding: 0 26px 36px; }
+    .topbar { position: relative; min-height: 62px; padding: 8px 0; border-bottom: 1px solid var(--line); background: var(--paper); }
+    .breadcrumb { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; color: #384047; font-size: 11px; }
+    .breadcrumb strong { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .breadcrumb small { grid-column: 1 / -1; color: var(--muted); font-size: 9px; }
+    .top-actions { gap: 13px; }
+    .icon-button { width: 34px; height: 34px; border: 0; background: transparent; color: #30363b; font-size: 15px; }
+    .icon-button:hover { background: #eeeae3; }
+    .header-account { display: flex; align-items: center; gap: 9px; }
+    .header-account .avatar { width: 32px; height: 32px; font-size: 10px; }
+    .header-account > strong { max-width: 112px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .mobile-sign-out { display: none; }
+    .content { max-width: 1320px; padding: 16px 0 34px; }
+    .demo-banner { margin-top: 0; font-size: 11px; }
+    .heading { align-items: center; margin: 1px 4px 16px; }
+    .eyebrow { margin-bottom: 4px; color: #946c24; font-size: 9px; letter-spacing: .09em; }
+    .heading h1 { margin: 0; color: #20252a; font: 700 clamp(25px, 2.5vw, 31px)/1.18 var(--font-body); letter-spacing: -.045em; }
+    .subheading { margin-top: 4px; font-size: 12px; }
+    .button { min-height: 38px; border-radius: 6px; font-size: 10px; }
+    .button.primary { border-color: var(--gold); background: var(--gold); color: #fff; }
+    .overview.project-hero { display: block; margin-bottom: 12px; }
+    .progress-panel { min-height: 190px; display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 16px; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 2px 8px #24201a06; }
+    .progress-panel::after { display: none; }
+    .project-overview-copy { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; justify-content: center; padding: 13px 13px 12px 14px; }
+    .status-pill { padding: 4px 9px; border: 0; background: #fbf2e1; color: #805d00; font-size: 9px; }
+    .status-pill i { background: var(--gold); }
+    .status-pill.finishing { background: #fbf2e1; }
+    .status-pill.completed { background: #edf4ee; color: #3d714c; }
+    .status-pill.completed i { background: #4b8b5b; }
+    .progress-panel h2 { margin: 8px 0 2px; color: #1e2328; font: 700 clamp(18px, 2vw, 22px)/1.24 var(--font-body); letter-spacing: -.035em; }
+    .project-location { margin: 0; color: var(--muted); font-size: 10px; }
+    .hero-progress { width: 100%; margin-top: 13px; }
+    .progress-meter-heading { justify-content: flex-start; gap: 7px; margin-bottom: 7px; }
+    .progress-meter-heading strong { color: var(--gold); font: 700 29px/1 var(--font-body); letter-spacing: -.045em; }
+    .progress-meter-heading span { color: var(--muted); font-size: 13px; font-weight: 500; }
+    .progress-track { height: 9px; border: 0; background: #e6e7e9; }
+    .progress-track > span { background: linear-gradient(90deg, #c18a25, #d8a33f); }
+    .progress-summary { margin-top: 5px; font-size: 9px; }
+    .project-facts { width: 100%; gap: 8px 14px; margin-top: auto; padding-top: 9px; border-color: #eeece7; }
+    .project-fact { align-items: center; gap: 6px; color: var(--muted); font-size: 9px; }
+    .project-fact > span { color: #596675; font-size: 12px; }
+    .project-fact strong { color: #555f68; font-size: 9px; font-weight: 500; text-align: left; }
+    .project-hero-image { position: relative; min-width: 0; min-height: 170px; overflow: hidden; border-radius: 5px; background: #ece9e2; }
+    .project-hero-image img { display: block; width: 100%; height: 100%; min-height: 170px; max-height: 230px; object-fit: cover; }
+    .image-caption { position: absolute; right: 9px; bottom: 9px; padding: 4px 7px; border: 1px solid #ffffff80; border-radius: 4px; background: #20252ac9; color: #fff; font-size: 8px; }
+    .client-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(250px, .88fr); gap: 13px; align-items: start; }
+    .client-dashboard-main, .client-dashboard-side { display: grid; gap: 10px; min-width: 0; }
+    .dashboard-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 2px 8px #24201a06; }
+    .dashboard-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 10px; border-bottom: 1px solid #efede8; }
+    .dashboard-card-heading h2 { display: flex; align-items: center; gap: 7px; margin: 0; color: #252a2e; font: 700 13px/1.35 var(--font-body); letter-spacing: -.02em; }
+    .dashboard-card-heading p { margin: 3px 0 0; color: var(--muted); font-size: 9px; }
+    .panel-link { color: #946c24; font-size: 9px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .panel-link:hover, .team-message-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .journey-card { padding-bottom: 11px; }
+    .journey-track { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 0; padding: 14px 11px 9px; list-style: none; }
+    .journey-track::before { position: absolute; top: 25px; right: 10%; left: 10%; height: 2px; background: #dedfe1; content: ''; }
+    .journey-step { position: relative; z-index: 1; display: grid; justify-items: center; gap: 4px; min-width: 0; color: #30363b; text-align: center; }
+    .journey-marker { display: grid; place-items: center; width: 23px; height: 23px; border: 2px solid #d9dce0; border-radius: 50%; background: #fff; color: #fff; font-size: 11px; font-weight: 700; }
+    .journey-step.complete .journey-marker { border-color: var(--gold); background: var(--gold); }
+    .journey-step.current .journey-marker { border: 3px solid var(--gold); box-shadow: inset 0 0 0 3px #fff; }
+    .journey-step strong { width: 100%; overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .journey-step small { color: var(--muted); font-size: 8px; }
+    .journey-step.current small { color: #956811; }
+    .journey-update { display: flex; align-items: flex-start; gap: 9px; margin: 4px 13px 0; padding: 9px 10px; border: 1px solid #f2ead9; border-radius: 6px; background: #fcf7ed; }
+    .journey-update-icon, .attention-icon { display: grid; place-items: center; width: 17px; height: 17px; flex: 0 0 auto; border-radius: 50%; background: var(--gold); color: #fff; font-size: 10px; font-weight: 700; }
+    .journey-update strong { display: block; color: #805d00; font-size: 9px; }
+    .journey-update p { margin: 2px 0 0; color: #715f42; font-size: 9px; }
+    .journey-update small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .latest-updates .dashboard-card-heading { border-bottom: 0; }
+    .updates { min-height: 85px; border: 0; border-radius: 0; box-shadow: none; }
+    .empty-log { min-height: 112px; }
+    .empty-log-mark { background: var(--gold-soft); color: #956811; }
+    .empty-log strong { font-size: 11px; }
+    .empty-log p { font-size: 10px; }
+    .client-log-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 10px; padding: 10px 13px; }
+    .client-log-entry + .client-log-entry { border-top: 1px solid #efede8; }
+    .client-log-head { grid-column: 1 / -1; margin-bottom: 0; }
+    .client-log-head strong { font: 600 10px var(--font-body); }
+    .client-log-head span { font-size: 8px; }
+    .client-log-entry p { grid-column: 1; font-size: 9px; line-height: 1.55; }
+    .client-log-photos { grid-column: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; align-self: center; width: min(100%, 225px); margin-top: 0; }
+    .update-photo { width: 70px; height: 51px; border-radius: 5px; }
+    .stage-details { scroll-margin-top: 15px; }
+    .stage-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; cursor: pointer; list-style: none; }
+    .stage-details > summary::-webkit-details-marker { display: none; }
+    .stage-details > summary strong, .stage-details > summary small { display: block; }
+    .stage-details > summary strong { color: #30363b; font-size: 10px; }
+    .stage-details > summary small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .expand-mark { display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid var(--line); border-radius: 50%; color: #89601d; font-size: 15px; }
+    .stage-details[open] .expand-mark { transform: rotate(45deg); }
+    .stage-details .client-stages { grid-template-columns: 1fr; padding: 0 11px 11px; }
+    .client-stage { border-color: #ece9e3; border-radius: 6px; }
+    .client-stage-number { color: #96712f; }
+    .client-stage-title { font-size: 10px; }
+    .client-stage-state { font-size: 8px; }
+    .upcoming-list { padding: 0 13px; }
+    .upcoming-stage { display: grid; grid-template-columns: 39px minmax(0, 1fr); gap: 8px; align-items: center; padding: 9px 0; border-bottom: 1px solid #efede8; }
+    .upcoming-stage:last-child { border-bottom: 0; }
+    .upcoming-stage-date { color: #4e5a64; font-size: 9px; font-weight: 700; }
+    .upcoming-stage strong { color: #30363b; font-size: 9px; font-weight: 600; }
+    .next-steps-card > .panel-link { display: inline-flex; margin: 0 13px 12px; }
+    .side-empty { margin: 0; padding: 11px 0; color: var(--muted); font-size: 9px; }
+    .action-card .dashboard-card-heading { justify-content: flex-start; }
+    .attention-icon { width: 16px; height: 16px; font-size: 10px; }
+    .decisions { margin: 0; padding: 0 11px 10px; border: 0; border-radius: 0; box-shadow: none; }
+    .decisions-head { display: none; }
+    .decision-list { gap: 7px; }
+    .decision-card { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 9px; border-color: #efede8; border-radius: 6px; background: #fff; }
+    .decision-card h3 { margin-bottom: 3px; font: 600 10px var(--font-body); }
+    .decision-card p { margin-top: 2px; font-size: 8px; }
+    .decision-meta { justify-items: start; }
+    .decision-state { padding: 3px 7px; font-size: 8px; }
+    .decision-actions { gap: 6px; }
+    .decision-actions .button, .decision-actions button { min-height: 30px; padding: 0 8px; font-size: 8px; }
+    .decision-empty { margin: 0; padding: 8px 2px; color: var(--muted); font-size: 9px; }
+    .local-demo-note { margin: 7px 12px 0; font-size: 8px; }
+    .project-team-card { padding-bottom: 12px; }
+    .project-team-card > p { margin: 0; padding: 10px 13px 5px; color: var(--muted); font-size: 9px; line-height: 1.55; }
+    .team-message-link { margin: 0 13px; padding: 3px 0; border: 0; background: none; color: #946c24; font-size: 9px; font-weight: 700; cursor: pointer; }
+    .quick-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 11px; }
+    .quick-link-card { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 9px; align-items: center; min-width: 0; padding: 11px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: inherit; text-decoration: none; box-shadow: 0 2px 8px #24201a06; }
+    .quick-link-card:hover { border-color: #ddc89e; background: #fffdfa; }
+    .quick-link-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 6px; background: var(--gold-soft); color: #986b19; font-size: 15px; }
+    .quick-link-card > span:last-child { display: grid; min-width: 0; }
+    .quick-link-card small { color: var(--muted); font-size: 8px; }
+    .quick-link-card strong { overflow: hidden; margin-top: 1px; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .quick-link-action { margin-top: 3px; color: #946c24; font-size: 8px; font-weight: 700; }
+    .project-files-card { margin-top: 11px; scroll-margin-top: 16px; }
+    .project-gallery { margin: 0; overflow: visible; border: 0; border-radius: 0; box-shadow: none; }
+    .project-gallery h2 { display: none; }
+    #client-file-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; padding: 10px 13px 13px; }
+    .design-document-link { min-height: 38px; padding: 0 10px; border-radius: 5px; font-size: 9px; }
+    #documents-empty { padding: 4px 13px 13px; }
+    .mobile-nav { display: none; }
+    .toast { border-radius: 7px; }
+    .button:focus-visible, .icon-button:focus-visible, .text-button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #c18a2570; outline-offset: 2px; }
+    @media (max-width: 1000px) {
+      .app { grid-template-columns: 190px minmax(0, 1fr); }
+      main { padding-right: 20px; padding-left: 20px; }
+      .client-dashboard-grid { grid-template-columns: minmax(0, 1.3fr) minmax(220px, .9fr); }
+      .progress-panel { grid-template-columns: minmax(0, .95fr) minmax(0, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .client-dashboard-grid { grid-template-columns: 1fr; }
+      .client-dashboard-side { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+      .next-steps-card { grid-row: span 2; }
+      .quick-links { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .app { display: block; padding-bottom: 64px; }
+      .sidebar { display: none; }
+      main { padding: 0 15px 25px; }
+      .topbar { min-height: 59px; padding: 7px 0; }
+      .top-actions { gap: 6px; }
+      .header-account { gap: 5px; }
+      .header-account .avatar { width: 28px; height: 28px; }
+      .header-account > strong { max-width: 74px; font-size: 9px; }
+      .mobile-sign-out { display: inline-flex; min-height: 30px; align-items: center; padding: 0 7px; border: 1px solid var(--line); border-radius: 5px; background: #fff; font-size: 8px; }
+      .content { padding-top: 17px; }
+      .heading { align-items: flex-start; gap: 9px; margin: 0 1px 12px; }
+      .heading h1 { font-size: clamp(21px, 5vw, 26px); }
+      .subheading { font-size: 10px; }
+      .heading .button { min-height: 33px; padding: 0 8px; font-size: 8px; white-space: nowrap; }
+      .progress-panel { min-height: 0; grid-template-columns: 1fr; gap: 7px; }
+      .project-overview-copy { order: 2; padding: 8px 10px 10px; }
+      .project-hero-image { order: 1; min-height: 155px; max-height: 200px; }
+      .project-hero-image img { min-height: 155px; max-height: 200px; }
+      .hero-progress { margin-top: 10px; }
+      .project-facts { margin-top: 10px; }
+      .client-dashboard-side { grid-template-columns: 1fr; }
+      .next-steps-card { grid-row: auto; }
+      .quick-links { grid-template-columns: 1fr; gap: 7px; }
+      .quick-link-card { grid-template-columns: 32px minmax(0, 1fr); padding: 9px; }
+      .quick-link-card small, .quick-link-action { font-size: 8px; }
+      .journey-track { padding-right: 4px; padding-left: 4px; }
+      .journey-track::before { right: 8%; left: 8%; }
+      .journey-step strong { font-size: 7px; }
+      .journey-step small { font-size: 7px; }
+      .journey-marker { width: 21px; height: 21px; }
+      .journey-track::before { top: 24px; }
+      .client-log-entry { grid-template-columns: minmax(0, 1fr) auto; }
+      .client-log-photos { width: min(100%, 186px); }
+      .updates { min-height: 75px; }
+      .mobile-nav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 8px max(6px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #fff; }
+      .mobile-nav a { display: grid; justify-items: center; gap: 1px; padding: 3px; color: var(--muted); text-decoration: none; font-size: 8px; }
+      .mobile-nav a.active { color: #8b641f; font-weight: 700; }
+      .mobile-nav span:first-child { font-size: 15px; }
+      .toast { right: 12px; bottom: 74px; left: 12px; text-align: center; }
+    }
+    @media (max-width: 400px) {
+      main { padding-right: 11px; padding-left: 11px; }
+      .top-actions { gap: 3px; }
+      .header-account > strong { max-width: 57px; }
+      .heading .button { gap: 4px; padding: 0 6px; }
+      .journey-update { margin-right: 8px; margin-left: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
   </style>
 </head>
 <body data-private-page>
   <div class="app">
     <aside class="sidebar" aria-label="Main navigation">
-      <div class="brand">
-        <img class="brand-logo" src="assets/kb-london-logo.png" alt="K&amp;B (Kitchens &amp; Bathrooms) London Limited">
-      </div>
-      <p class="side-label">Your account</p>
-      <nav class="nav">
-        <a class="active" href="#overview"><span class="nav-icon" aria-hidden="true">▦</span>Project overview</a>
-        <a href="#progress"><span class="nav-icon" aria-hidden="true">◷</span>Project progress</a>
-        <a href="#updates"><span class="nav-icon" aria-hidden="true">▤</span>Daily site log</a>
+      <div class="brand"><img class="brand-logo" src="assets/kb-london-logo.png" alt="K&amp;B (Kitchens &amp; Bathrooms) London Limited"></div>
+      <p class="side-label">Your project</p>
+      <nav class="nav" aria-label="Project sections">
+        <a class="active" href="#overview"><span class="nav-icon" aria-hidden="true">⌂</span>Project overview</a>
+        <a href="#progress-details"><span class="nav-icon" aria-hidden="true">▧</span>Progress &amp; photos</a>
+        <a href="#documents"><span class="nav-icon" aria-hidden="true">▤</span>Documents</a>
+        <a href="#updates"><span class="nav-icon" aria-hidden="true">◷</span>Project updates</a>
       </nav>
       <div class="side-project">
         <p class="side-label">Current project</p>
-        <button class="project-switch" type="button" aria-label="Current project">
-        <span class="project-thumb" aria-hidden="true">K&amp;B</span><span><strong id="sidebar-project-title">Your project</strong><small>Project dashboard</small></span><span class="project-arrow" aria-hidden="true">⌄</span>
-        </button>
+        <div class="project-switch"><span class="project-thumb" aria-hidden="true">K&amp;B</span><span><strong id="sidebar-project-title">Your project</strong><small>Private project space</small></span></div>
       </div>
-      <div class="help-card"><strong>Need a hand?</strong><p>Your project coordinator is here to help.</p><button class="text-button message-trigger" type="button">Send a message <span aria-hidden="true">→</span></button></div>
+      <div class="help-card"><strong>Need a hand?</strong><p>Your project team is here to help.</p><button class="text-button message-trigger" type="button">Send a message <span aria-hidden="true">→</span></button></div>
       <div class="account"><div class="avatar" id="client-avatar" aria-hidden="true">KB</div><div><strong id="sidebar-client-name">Customer</strong><small>Client account</small></div></div>
+      <button class="sidebar-sign-out" id="portal-sign-out" type="button"><span aria-hidden="true">⇥</span>Sign out</button>
     </aside>
 
     <main id="overview">
-      <header class="topbar"><div class="crumb"><span class="welcome-kicker">YOUR PROJECT, MADE CLEAR</span><strong class="welcome-title" id="welcome-title">Welcome to your project</strong></div><div class="top-actions"><a class="notification-link" id="top-update-link" href="#updates" hidden><span class="notification-mark" aria-hidden="true"></span>Project update</a><button class="icon-button message-trigger" type="button" aria-label="Message your project coordinator" title="Message your project coordinator"><span aria-hidden="true">✉</span></button><button class="staff-preview-link" id="portal-sign-out" type="button">Sign out</button></div></header>
+      <header class="topbar">
+        <div class="breadcrumb"><span>My project</span><span aria-hidden="true">/</span><strong id="welcome-title">Your project</strong><small id="project-reference"></small></div>
+        <div class="top-actions"><button class="icon-button message-trigger" type="button" aria-label="Message your project coordinator" title="Message your project coordinator"><span aria-hidden="true">✉</span></button><div class="header-account"><div class="avatar" aria-hidden="true">K&amp;B</div><strong id="header-client-name">Customer</strong></div><button class="mobile-sign-out" id="mobile-sign-out" type="button">Sign out</button></div>
+      </header>
       <div class="content">
         <p class="demo-banner" hidden id="portal-error" role="alert"></p>
-        <section class="brand-promise" aria-labelledby="brand-promise-title">
-          <div class="brand-promise-copy">
-            <p class="brand-promise-kicker">K&amp;B (Kitchens &amp; Bathrooms) London Limited</p>
-            <h2 id="brand-promise-title">K&amp;B Client Renovation Portal</h2>
-            <p>Your home deserves clear communication, craftsmanship without compromise, and complete respect at every step. We make your renovation feel reassuring, transparent and properly cared for.</p>
-          </div>
-          <div class="brand-promise-values" aria-label="Our promise">
-            <div class="brand-promise-value"><span class="brand-promise-mark" aria-hidden="true">✓</span><span>Total transparency</span></div>
-            <div class="brand-promise-value"><span class="brand-promise-mark" aria-hidden="true">✦</span><span>Uncompromised craft</span></div>
-            <div class="brand-promise-value"><span class="brand-promise-mark" aria-hidden="true">⌂</span><span>Respect for your home</span></div>
-          </div>
-        </section>
-        <section class="heading" aria-labelledby="page-title"><div><p class="eyebrow" id="project-reference"></p><h1 id="page-title">Your project</h1><p class="subheading" id="project-subheading">Your renovation, clearly tracked from first day to final finish.</p></div><button class="button message-trigger" type="button"><span aria-hidden="true">✉</span> Message the team</button></section>
+        <section class="heading" aria-labelledby="page-title"><div><p class="eyebrow">YOUR RENOVATION, AT A GLANCE</p><h1 id="page-title">Your project</h1><p class="subheading" id="project-subheading">Everything about your project, clearly in one place.</p></div><button class="button message-trigger" type="button"><span aria-hidden="true">✉</span> Message the team</button></section>
 
-        <a class="latest-update-card" id="latest-update-card" href="#updates" hidden>
-          <span class="latest-update-icon" aria-hidden="true">↗</span>
-          <span class="latest-update-copy"><span class="latest-update-kicker">Latest project update</span><strong class="latest-update-title" id="latest-update-title"></strong><span class="latest-update-note" id="latest-update-note"></span></span>
-          <span class="latest-update-cta">View update&nbsp; →</span>
-        </a>
-
-        <section class="overview" aria-label="Project overview">
-          <section class="progress-panel" id="progress" aria-labelledby="progress-title">
-            <div class="panel-heading"><div><h2 id="progress-title">Current status</h2><p id="project-type-subtitle">Bathroom renovation</p></div><span class="status-pill"><i aria-hidden="true"></i>In progress</span></div>
-            <div class="project-progress">
-              <div class="progress-meter-heading"><span>Stage-based project progress</span><strong id="progress-percent">0%</strong></div>
-              <div class="progress-track" id="progress-track" role="progressbar" aria-label="Project progress by renovation stage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div>
-              <p class="progress-summary" id="progress-summary">Progress updates will appear here as stages are updated.</p>
+        <section class="overview project-hero" aria-label="Project overview">
+          <section class="progress-panel" id="progress" aria-labelledby="detail-project-title">
+            <div class="project-overview-copy">
+              <span class="status-pill"><i aria-hidden="true"></i><span id="project-status-label">In progress</span></span>
+              <h2 id="detail-project-title">Your project</h2>
+              <p class="project-location" id="project-type-subtitle">Your K&amp;B project</p>
+              <div class="hero-progress">
+                <div class="progress-meter-heading"><strong id="progress-percent">0%</strong><span>complete</span></div>
+                <div class="progress-track" id="progress-track" role="progressbar" aria-label="Project progress by renovation stage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div>
+                <p class="progress-summary" id="progress-summary">Progress updates will appear here as stages are updated.</p>
+              </div>
+              <div class="project-facts">
+                <div class="project-fact" id="project-start-row"><span aria-hidden="true">▦</span><strong id="project-start"></strong></div>
+                <div class="project-fact" id="project-duration-row"><span aria-hidden="true">·</span><strong id="project-duration"></strong></div>
+              </div>
             </div>
-            <div class="project-facts">
-              <div class="project-fact" id="project-start-row"><span>Work started</span><strong id="project-start">Monday, 5 October 2026</strong></div>
-              <div class="project-fact" id="project-duration-row"><span>Scheduled window</span><strong id="project-duration">10 working days</strong></div>
-            </div>
+            <div class="project-hero-image"><img id="project-hero-image" src="assets/login-bathroom.png" alt="Example bathroom renovation interior"><span class="image-caption">Renovation inspiration</span></div>
           </section>
         </section>
 
-        <section class="next-step" aria-labelledby="next-step-title">
-          <div><span class="next-step-kicker" id="next-step-kicker">Next on your project</span><h2 id="next-step-title">Loading your next stage…</h2><p id="next-step-copy">Your project team will keep this plan up to date.</p></div>
-          <div class="next-step-date"><span id="next-step-date-label">Target date</span><strong id="next-step-date">To be confirmed</strong></div>
-        </section>
+        <div class="client-dashboard-grid">
+          <div class="client-dashboard-main">
+            <section class="dashboard-card journey-card" aria-labelledby="journey-title">
+              <div class="dashboard-card-heading"><div><h2 id="journey-title">Your project journey</h2><p id="stage-summary">Stage updates appear as logged.</p></div></div>
+              <ol class="journey-track" id="project-journey" aria-label="Project journey"></ol>
+              <div class="journey-update"><span class="journey-update-icon" aria-hidden="true">i</span><div><strong id="journey-current-title">Your project is underway</strong><p id="journey-current-copy">Your team will share progress updates here.</p><small id="journey-next-update"></small></div></div>
+            </section>
 
-        <div class="section-head"><h2>Project timeline · 8 stages</h2><span class="updated" id="stage-summary">Stage updates appear as logged</span></div>
-        <section class="client-stages" id="client-stage-grid" aria-label="Renovation stage progress"></section>
+            <section class="dashboard-card latest-updates" id="updates" aria-labelledby="updates-title">
+              <div class="dashboard-card-heading"><div><h2 id="updates-title">Latest updates</h2><p>Notes and photos shared by your project team.</p></div><a class="panel-link" href="#updates" id="top-update-link" hidden>View latest <span aria-hidden="true">→</span></a></div>
+              <div class="updates" id="client-site-log" aria-live="polite">
+                <div class="empty-log"><span class="empty-log-mark" aria-hidden="true">◷</span><strong>No updates yet</strong><p>Your project team can add site notes and photos here as work progresses.</p></div>
+              </div>
+            </section>
 
-        <section class="decisions" aria-labelledby="decisions-title">
-          <div class="decisions-head"><div><h2 id="decisions-title">Decisions &amp; approvals</h2><p>Review project choices and respond when your team requests approval.</p></div></div>
-          <div class="decision-list" id="client-decision-list" aria-live="polite"><p class="decision-empty">Loading project decisions…</p></div>
-          <p class="local-demo-note">Only decisions shared by your project team appear here.</p>
-        </section>
-
-        <section class="project-gallery" id="client-files" hidden>
-          <h2>Shared project files</h2>
-          <div id="client-file-list"></div>
-        </section>
-
-        <div class="section-head" id="updates"><h2>Daily site log</h2></div>
-        <section class="lower-grid" aria-label="Project updates and schedule">
-          <div class="updates" id="client-site-log" aria-live="polite">
-            <div class="empty-log"><span class="empty-log-mark" aria-hidden="true">◷</span><strong>No daily entries yet</strong><p>Your project team can add site notes and photos here as work progresses.</p></div>
+            <details class="dashboard-card stage-details" id="progress-details">
+              <summary id="progress-details-summary"><span><strong>Full stage progress &amp; photos</strong><small>View updates and images for every stage.</small></span><span class="expand-mark" aria-hidden="true">+</span></summary>
+              <section class="client-stages" id="client-stage-grid" aria-label="Renovation stage progress"></section>
+            </details>
           </div>
-          <aside class="schedule" aria-labelledby="schedule-title"><div class="schedule-title"><h2 id="schedule-title">Project details</h2><span class="calendar-mark" aria-hidden="true">▦</span></div>
-            <div class="schedule-event"><div class="event-date">TYPE</div><div class="event-copy"><strong id="detail-project-title">Your project</strong><span>Client · <span id="detail-client-name">Customer</span></span></div></div>
-            <div class="schedule-event" id="detail-start-row" hidden><div class="event-date">START</div><div class="event-copy"><strong id="detail-start"></strong><span>Work commenced</span></div></div>
-            <div class="schedule-event" id="detail-duration-row" hidden><div class="event-date">LENGTH</div><div class="event-copy"><strong id="detail-duration"></strong><span>Scheduled window</span></div></div>
-            <p class="schedule-note" id="detail-project-note">Site logs are open. Updates will appear here once shared by your project team.</p>
+
+          <aside class="client-dashboard-side">
+            <section class="dashboard-card next-steps-card" aria-labelledby="next-steps-title">
+              <div class="dashboard-card-heading"><div><h2 id="next-steps-title">Next steps</h2><p>Upcoming planned stages.</p></div></div>
+              <div class="upcoming-list" id="upcoming-stages"><p class="side-empty">Your project team will share scheduled dates here.</p></div>
+              <a class="panel-link" href="#progress-details">View full progress <span aria-hidden="true">→</span></a>
+            </section>
+
+            <section class="dashboard-card action-card" aria-labelledby="decisions-title">
+              <div class="dashboard-card-heading"><h2 id="decisions-title"><span class="attention-icon" aria-hidden="true">!</span><span id="decisions-heading-label">Your decisions</span></h2></div>
+              <div class="decision-list" id="client-decision-list" aria-live="polite"><p class="decision-empty">Loading your project decisions…</p></div>
+              <p class="local-demo-note">Only decisions shared by your project team appear here.</p>
+            </section>
+
+            <section class="dashboard-card project-team-card">
+              <div class="dashboard-card-heading"><h2>Your project team</h2></div>
+              <p>Your K&amp;B project team is here to help with any questions about your renovation.</p>
+              <button class="team-message-link message-trigger" type="button">Send a message <span aria-hidden="true">→</span></button>
+            </section>
           </aside>
+        </div>
+
+        <section class="quick-links" aria-label="Project resources">
+          <a class="quick-link-card" href="#documents"><span class="quick-link-icon" aria-hidden="true">▤</span><span><small>Project files</small><strong id="document-count">Shared documents</strong><span class="quick-link-action">View documents →</span></span></a>
+          <a class="quick-link-card" href="#progress-details"><span class="quick-link-icon" aria-hidden="true">▧</span><span><small>Progress &amp; photos</small><strong id="photo-count">Project photos</strong><span class="quick-link-action">View gallery →</span></span></a>
+          <a class="quick-link-card" href="#decisions-title"><span class="quick-link-icon" aria-hidden="true">✓</span><span><small>Your project</small><strong id="decision-count">Decisions &amp; approvals</strong><span class="quick-link-action">Review decisions →</span></span></a>
+        </section>
+
+        <section class="dashboard-card project-files-card" id="documents" aria-labelledby="documents-title">
+          <div class="dashboard-card-heading"><div><h2 id="documents-title">Shared documents</h2><p>Files your project team has shared with you.</p></div></div>
+          <div class="project-gallery" id="client-files" hidden>
+            <div id="client-file-list"></div>
+          </div>
+          <p class="side-empty" id="documents-empty">Shared documents will appear here when they are ready.</p>
         </section>
       </div>
     </main>
   </div>
-  <nav class="mobile-nav" aria-label="Mobile navigation"><a class="active" href="#overview"><span aria-hidden="true">▦</span><span>Overview</span></a><a href="#progress"><span aria-hidden="true">◷</span><span>Progress</span></a><a href="#updates"><span aria-hidden="true">▤</span><span>Updates</span></a></nav>
+  <nav class="mobile-nav" aria-label="Project navigation"><a class="active" href="#overview"><span aria-hidden="true">⌂</span><span>Overview</span></a><a href="#progress-details"><span aria-hidden="true">▧</span><span>Progress</span></a><a href="#updates"><span aria-hidden="true">◷</span><span>Updates</span></a><a href="#documents"><span aria-hidden="true">▤</span><span>Files</span></a></nav>
 
   <dialog id="message-dialog" aria-labelledby="message-title">
     <form class="dialog-inner" id="message-form">
@@ -395,8 +656,6 @@
     </form>
   </dialog>
   <div class="toast" role="status" aria-live="polite"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
-  <script src="supabase/config.js"></script>
   <script src="supabase/portal.js"></script>
   <script src="projects.js"></script>
   <script src="client-portal.js"></script>

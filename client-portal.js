@@ -20,38 +20,36 @@ function dateLabel(value) {
 
 function setStatus(status) {
   const pill = document.querySelector('.status-pill');
-  const indicator = pill.querySelector('i');
-  pill.textContent = statusLabels[status] || 'In progress';
-  pill.prepend(indicator);
+  pill.className = `status-pill ${status}`;
+  document.querySelector('#project-status-label').textContent = statusLabels[status] || 'In progress';
 }
 
 function renderProject(project, user) {
   const name = project.client_name || user.email || 'Customer';
   const initials = name.split(/\s+/).filter(Boolean);
-  document.querySelector('#page-title').textContent = project.title;
-  document.querySelector('#project-reference').textContent = project.reference || '';
+  const projectType = project.kind === 'kitchen' ? 'Kitchen' : 'Bathroom';
+  document.querySelector('#page-title').textContent = `Your ${projectType.toLocaleLowerCase()} renovation`;
+  document.querySelector('#welcome-title').textContent = project.title;
+  document.querySelector('#project-reference').textContent = project.reference ? `Project ref: ${project.reference}` : '';
   document.querySelector('#sidebar-project-title').textContent = project.title;
   document.querySelector('#sidebar-client-name').textContent = name;
-  document.querySelector('#welcome-title').textContent = `Welcome, ${initials[0]} — your project starts here`;
+  document.querySelector('#header-client-name').textContent = name;
   document.querySelector('#client-avatar').textContent = initials.length > 1
     ? `${initials[0][0]}${initials[initials.length - 1][0]}`.toUpperCase()
     : initials[0].slice(0, 2).toUpperCase();
   document.querySelector('#detail-project-title').textContent = project.title;
-  document.querySelector('#project-type-subtitle').textContent = project.title;
-  document.querySelector('#detail-client-name').textContent = name;
-  document.querySelector('#detail-project-note').textContent = project.project_note || 'Your project team will share updates here.';
+  document.querySelector('#project-type-subtitle').textContent = `${projectType} renovation`;
+  const heroImage = document.querySelector('#project-hero-image');
+  heroImage.src = `assets/login-${project.kind === 'kitchen' ? 'kitchen' : 'bathroom'}.png`;
+  heroImage.alt = `Example ${projectType.toLocaleLowerCase()} renovation interior`;
   document.querySelector('#dialog-client-project').textContent = `${name} · ${project.title}`;
   document.querySelector('#project-start-row').hidden = !project.start_date;
-  document.querySelector('#detail-start-row').hidden = !project.start_date;
   if (project.start_date) {
-    document.querySelector('#project-start').textContent = dateLabel(project.start_date);
-    document.querySelector('#detail-start').textContent = dateLabel(project.start_date);
+    document.querySelector('#project-start').textContent = `Started ${dateLabel(project.start_date)}`;
   }
   document.querySelector('#project-duration-row').hidden = !project.duration;
-  document.querySelector('#detail-duration-row').hidden = !project.duration;
   if (project.duration) {
-    document.querySelector('#project-duration').textContent = project.duration;
-    document.querySelector('#detail-duration').textContent = project.duration;
+    document.querySelector('#project-duration').textContent = `Scheduled window · ${project.duration}`;
   }
   setStatus(project.status);
   document.title = `${project.title} | K&B (Kitchens & Bathrooms) London Limited`;
@@ -76,6 +74,12 @@ function renderStageGrid(project, updates, files, client) {
   document.querySelector('#progress-track').setAttribute('aria-valuenow', String(progress));
   document.querySelector('#progress-fill').style.width = `${progress}%`;
   document.querySelector('#progress-summary').textContent = `${completeCount} of ${stageNames.length} stages complete${activeCount ? ` · ${activeCount} in progress` : ''}.`;
+  document.querySelector('#stage-summary').textContent = `${completeCount} of ${stageNames.length} stages complete`;
+  const finalStage = updates.find((item) => item.stage_number === stageNames.length);
+  if (finalStage?.planned_date) {
+    document.querySelector('#project-duration-row').hidden = false;
+    document.querySelector('#project-duration').textContent = `Estimated completion ${dateLabel(finalStage.planned_date)}`;
+  }
   stageGrid.replaceChildren();
 
   stageNames.forEach((stageName, index) => {
@@ -153,27 +157,114 @@ function renderStageGrid(project, updates, files, client) {
     stageGrid.append(card);
   });
 
-  const next = updates
-    .filter((item) => item.status !== 'complete')
-    .sort((first, second) => first.stage_number - second.stage_number)[0];
+  renderProjectJourney(stageNames, updates);
+  renderUpcomingStages(stageNames, updates);
+
+  const next = stageNames
+    .map((name, index) => ({ name, index, update: updates.find((item) => item.stage_number === index + 1) }))
+    .find(({ update }) => update?.status !== 'complete');
   if (next) {
-    const index = next.stage_number - 1;
-    document.querySelector('#next-step-title').textContent = stageNames[index];
-    document.querySelector('#next-step-copy').textContent = next.note || 'Your project team will keep this plan up to date.';
-    document.querySelector('#next-step-date').textContent = next.planned_date ? dateLabel(next.planned_date) : 'To be confirmed';
+    document.querySelector('#journey-current-title').textContent = next.update?.status === 'in-progress'
+      ? `${next.name} is underway`
+      : `${next.name} is coming up`;
+    document.querySelector('#journey-current-copy').textContent = next.update?.note || 'Your project team will keep this stage up to date.';
+    document.querySelector('#journey-next-update').textContent = next.update?.planned_date
+      ? `Next update expected: ${dateLabel(next.update.planned_date)}`
+      : '';
   } else {
-    document.querySelector('#next-step-title').textContent = 'All stages complete';
-    document.querySelector('#next-step-copy').textContent = 'Your project team will share the handover details here.';
-    document.querySelector('#next-step-date').textContent = '';
+    document.querySelector('#journey-current-title').textContent = 'All project stages complete';
+    document.querySelector('#journey-current-copy').textContent = 'Your project team will be in touch about the next steps.';
+    document.querySelector('#journey-next-update').textContent = '';
   }
+  document.querySelector('#photo-count').textContent = `${files.filter((file) => file.category === 'stage-photo').length} project photos`;
+}
+
+function renderProjectJourney(stageNames, updates) {
+  const groups = [
+    { label: 'Preparation', first: 1, last: 2 },
+    { label: 'First fix', first: 3, last: 3 },
+    { label: 'Installation', first: 4, last: 5 },
+    { label: 'Second fix', first: 6, last: 7 },
+    { label: 'Final touches', first: 8, last: 8 }
+  ];
+  const stageByNumber = new Map(updates.map((update) => [update.stage_number, update]));
+  const phases = groups.map((group) => {
+    const stageStatuses = Array.from({ length: group.last - group.first + 1 }, (_, index) => {
+      const stageNumber = group.first + index;
+      return stageByNumber.get(stageNumber)?.status || 'not-started';
+    });
+    return {
+      ...group,
+      label: group.last <= stageNames.length ? group.label : null,
+      statuses: stageStatuses,
+      complete: stageStatuses.every((status) => status === 'complete')
+    };
+  }).filter((phase) => phase.label);
+  const currentIndex = phases.findIndex((phase) => !phase.complete);
+  const journey = document.querySelector('#project-journey');
+  journey.replaceChildren();
+  phases.forEach((phase, index) => {
+    const item = document.createElement('li');
+    item.className = 'journey-step';
+    if (phase.complete) item.classList.add('complete');
+    else if (index === currentIndex) item.classList.add('current');
+    else item.classList.add('upcoming');
+    const marker = document.createElement('span');
+    marker.className = 'journey-marker';
+    marker.setAttribute('aria-hidden', 'true');
+    marker.textContent = phase.complete ? '✓' : '';
+    const title = document.createElement('strong');
+    title.textContent = phase.label;
+    const state = document.createElement('small');
+    state.textContent = phase.complete ? 'Completed' : index === currentIndex
+      ? phase.statuses.includes('in-progress') ? 'Current stage' : 'Next'
+      : 'Upcoming';
+    item.append(marker, title, state);
+    journey.append(item);
+  });
+}
+
+function renderUpcomingStages(stageNames, updates) {
+  const list = document.querySelector('#upcoming-stages');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcoming = updates
+    .filter((update) => update.planned_date && update.status !== 'complete'
+      && new Date(`${update.planned_date}T00:00:00`) >= today)
+    .sort((first, second) => first.planned_date.localeCompare(second.planned_date))
+    .slice(0, 3);
+  list.replaceChildren();
+  if (!upcoming.length) {
+    const empty = document.createElement('p');
+    empty.className = 'side-empty';
+    empty.textContent = 'Your project team will share upcoming dates here.';
+    list.append(empty);
+    return;
+  }
+  upcoming.forEach((update) => {
+    const item = document.createElement('div');
+    item.className = 'upcoming-stage';
+    const date = document.createElement('span');
+    date.className = 'upcoming-stage-date';
+    date.textContent = new Date(`${update.planned_date}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const title = document.createElement('strong');
+    title.textContent = stageNames[update.stage_number - 1] || update.stage_name;
+    item.append(date, title);
+    list.append(item);
+  });
 }
 
 function renderDecisions(decisions, responses, client) {
   decisionList.replaceChildren();
   const responseByDecision = new Map(responses.map((row) => [row.decision_id, row]));
   const visible = decisions.filter((item) => item.client_visible).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const needsResponse = visible.filter((item) => item.status === 'awaiting-response' && !responseByDecision.has(item.id)).length;
+  document.querySelector('#decisions-heading-label').textContent = needsResponse ? 'Action needed' : 'Your decisions';
+  document.querySelector('#decision-count').textContent = needsResponse
+    ? `${needsResponse} ${needsResponse === 1 ? 'decision' : 'decisions'} awaiting you`
+    : 'No decisions awaiting you';
   if (!visible.length) {
-    decisionList.append(Object.assign(document.createElement('p'), { className: 'decision-empty', textContent: 'There are no decisions waiting for you right now.' }));
+    decisionList.append(Object.assign(document.createElement('p'), { className: 'decision-empty', textContent: 'You’re all caught up. There are no decisions waiting for you right now.' }));
     return;
   }
   visible.forEach((decision) => {
@@ -242,9 +333,12 @@ async function renderFiles(files, client) {
   const section = document.querySelector('#client-files');
   const list = document.querySelector('#client-file-list');
   const shared = files.filter((file) => file.client_visible && file.category !== 'internal-attachment');
-  section.hidden = !shared.length;
+  const documents = shared.filter((file) => file.category !== 'stage-photo');
+  section.hidden = !documents.length;
+  document.querySelector('#documents-empty').hidden = Boolean(documents.length);
+  document.querySelector('#document-count').textContent = `${documents.length} ${documents.length === 1 ? 'file' : 'files'}`;
   list.replaceChildren();
-  shared.filter((file) => file.category !== 'stage-photo').forEach((file) => {
+  documents.forEach((file) => {
     const link = document.createElement('a');
     link.className = 'design-document-link';
     link.textContent = `Download ${file.file_name}`;
@@ -287,20 +381,26 @@ function renderSiteLog(updates, clientUpdates, files, client) {
     }))
   ].filter((entry) => entry.note || entry.photos.length)
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  const latestCard = document.querySelector('#latest-update-card');
   const topLink = document.querySelector('#top-update-link');
   clientSiteLog.replaceChildren();
   if (!entries.length) {
-    latestCard.hidden = true;
     topLink.hidden = true;
     clientSiteLog.classList.remove('client-log-list');
-    clientSiteLog.innerHTML = '<div class="empty-log"><span class="empty-log-mark" aria-hidden="true">◷</span><strong>No daily entries yet</strong><p>Your project team can add site notes and photos here as work progresses.</p></div>';
+    const empty = document.createElement('div');
+    empty.className = 'empty-log';
+    const mark = document.createElement('span');
+    mark.className = 'empty-log-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '◷';
+    const title = document.createElement('strong');
+    title.textContent = 'No updates yet';
+    const note = document.createElement('p');
+    note.textContent = 'Your project team can add site notes and photos here as work progresses.';
+    empty.append(mark, title, note);
+    clientSiteLog.append(empty);
     return;
   }
-  latestCard.hidden = false;
   topLink.hidden = false;
-  document.querySelector('#latest-update-title').textContent = entries[0].title;
-  document.querySelector('#latest-update-note').textContent = entries[0].note || 'A project photo has been shared.';
   entries.forEach((entry, index) => {
     const article = document.createElement('article');
     article.className = 'client-log-entry';
@@ -318,17 +418,22 @@ function renderSiteLog(updates, clientUpdates, files, client) {
       note.textContent = entry.note;
       article.append(note);
     }
-    entry.photos.forEach((file) => {
-      const image = document.createElement('img');
-      image.className = 'update-photo';
-      image.alt = file.file_name;
-      image.loading = 'lazy';
-      signedUrl(client, file.storage_path).then((url) => { image.src = url; }).catch((error) => {
-        image.alt = `${file.file_name} (temporarily unavailable)`;
-        showToast(`Could not load a private project photo: ${error.message}`);
+    if (entry.photos.length) {
+      const photoGallery = document.createElement('div');
+      photoGallery.className = 'client-log-photos';
+      entry.photos.forEach((file) => {
+        const image = document.createElement('img');
+        image.className = 'update-photo';
+        image.alt = file.file_name;
+        image.loading = 'lazy';
+        signedUrl(client, file.storage_path).then((url) => { image.src = url; }).catch((error) => {
+          image.alt = `${file.file_name} (temporarily unavailable)`;
+          showToast(`Could not load a private project photo: ${error.message}`);
+        });
+        photoGallery.append(image);
       });
-      article.append(image);
-    });
+      article.append(photoGallery);
+    }
     clientSiteLog.append(article);
   });
 }
@@ -378,6 +483,21 @@ document.querySelector('#message-form').addEventListener('submit', (event) => {
 document.querySelector('#portal-sign-out').addEventListener('click', () => {
   window.portalAuth.signOut().catch((error) => showToast(`Could not sign out: ${error.message}`));
 });
+document.querySelector('#mobile-sign-out').addEventListener('click', () => {
+  window.portalAuth.signOut().catch((error) => showToast(`Could not sign out: ${error.message}`));
+});
+function updateClientNavigation() {
+  const activeHash = window.location.hash || '#overview';
+  if (activeHash === '#progress-details') document.querySelector('#progress-details').open = true;
+  document.querySelectorAll('.nav a, .mobile-nav a').forEach((link) => {
+    const active = link.getAttribute('href') === activeHash;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+window.addEventListener('hashchange', updateClientNavigation);
+updateClientNavigation();
 loadPortal().catch((error) => {
   console.error('Customer portal initialization failed.', error);
   const alert = document.querySelector('#portal-error');
