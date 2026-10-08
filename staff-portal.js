@@ -581,10 +581,10 @@ async function renderIssues(issues) {
     meta.append(edit);
     card.append(summary, meta);
     if (issue.share_with_client && issue.client_update) card.append(element('p', 'issue-shared', 'Client-safe update is shared in the portal.'));
-    if (issue.communication) {
+    if (issue.correspondence) {
       const details = document.createElement('details');
       details.className = 'issue-communication';
-      details.append(element('summary', '', 'View correspondence record'), element('p', '', issue.communication));
+      details.append(element('summary', '', 'View correspondence record'), element('p', '', issue.correspondence));
       card.append(details);
     }
     if (issue.attachment_file_id) {
@@ -620,7 +620,7 @@ function editIssue(issue) {
   document.querySelector('#issue-status').value = issue.status;
   document.querySelector('#issue-problem').value = issue.problem;
   document.querySelector('#issue-plan').value = issue.plan;
-  document.querySelector('#issue-communication').value = issue.communication;
+  document.querySelector('#issue-communication').value = issue.correspondence;
   document.querySelector('#issue-client-update').value = issue.client_update;
   document.querySelector('#issue-share-with-client').checked = issue.share_with_client;
   issueForm.hidden = false;
@@ -703,7 +703,7 @@ async function saveIssue(event) {
     status: document.querySelector('#issue-status').value,
     problem: document.querySelector('#issue-problem').value.trim(),
     plan: document.querySelector('#issue-plan').value.trim(),
-    communication: document.querySelector('#issue-communication').value.trim(),
+    correspondence: document.querySelector('#issue-communication').value.trim(),
     client_update: clientUpdate,
     share_with_client: shareWithClient,
     attachment_file_id: attachmentFileId,
