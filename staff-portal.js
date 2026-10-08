@@ -15,7 +15,11 @@ const filters = [...document.querySelectorAll('.filter')];
 const searchInput = document.querySelector('#project-search');
 const recordCount = document.querySelector('#record-count');
 const emptyState = document.querySelector('#empty-state');
+const navigationLinks = [...document.querySelectorAll('.rail-nav .rail-link')];
+const dashboardProjects = document.querySelector('#dashboard-projects');
+const dashboardMilestones = document.querySelector('#dashboard-milestones');
 const projectRows = new Map();
+let stageUpdates = [];
 let activeFilter = 'all';
 let activeProject = null;
 let editingIssueId = null;
@@ -98,20 +102,137 @@ function statusLabel(status) {
   return { progress: 'In Progress', finishing: 'In Finishing Stages', completed: 'Completed' }[status] || status;
 }
 
+function localDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function dateLabel(value, options = { month: 'short', day: 'numeric' }) {
+  if (!value) return '';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(undefined, options).format(date);
+}
+
+function upcomingMilestones() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const lastDay = new Date(today);
+  lastDay.setDate(lastDay.getDate() + 6);
+  const todayValue = localDateString(today);
+  const lastDayValue = localDateString(lastDay);
+
+  return stageUpdates
+    .filter((update) => update.planned_date && update.status !== 'complete'
+      && update.planned_date >= todayValue && update.planned_date <= lastDayValue)
+    .map((update) => {
+      const project = projectRows.get(update.project_id);
+      if (!project) return null;
+      const stageName = window.portalStages[project.kind]?.[update.stage_number - 1] || update.stage_name;
+      return { ...update, project, stageName };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.planned_date.localeCompare(b.planned_date));
+}
+
 function issueStatusLabel(status) {
   return { open: 'Open', 'awaiting-supplier': 'Awaiting supplier', 'in-progress': 'Action in progress', resolved: 'Resolved' }[status] || 'Open';
+}
+
+function updateNavigation() {
+  const activeHref = window.location.hash === '#projects' ? '#projects' : '#dashboard';
+  navigationLinks.forEach((link) => {
+    const active = link.getAttribute('href') === activeHref;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
 }
 
 function updateSummary() {
   const projects = [...projectRows.values()];
   const counts = Object.fromEntries(['progress', 'finishing', 'completed'].map((status) => [status, projects.filter((item) => item.status === status).length]));
-  document.querySelectorAll('.metric-value').forEach((metric, index) => {
-    metric.textContent = [projects.length, counts.completed, counts.finishing, counts.progress][index];
-  });
+  document.querySelector('#metric-active').textContent = counts.progress + counts.finishing;
+  document.querySelector('#metric-finishing').textContent = counts.finishing;
+  document.querySelector('#metric-milestones').textContent = upcomingMilestones().length;
+  document.querySelector('#metric-completed').textContent = counts.completed;
   filters.forEach((button) => {
     button.querySelector('.filter-count').textContent = button.dataset.filter === 'all' ? projects.length : counts[button.dataset.filter];
   });
   document.querySelector('#register-summary').textContent = `${projects.length} ${projects.length === 1 ? 'project' : 'projects'} in register`;
+}
+
+function renderDashboard() {
+  const activeProjects = [...projectRows.values()].filter((project) => project.status !== 'completed');
+  dashboardProjects.replaceChildren();
+
+  if (!activeProjects.length) {
+    const empty = element('p', 'dashboard-empty', projectRows.size
+      ? 'There are no active projects at the moment.'
+      : 'Your projects will appear here once they have been added.');
+    dashboardProjects.append(empty);
+  }
+
+  activeProjects.slice(0, 5).forEach((project) => {
+    const card = element('article', 'dashboard-project');
+    const details = element('div', 'dashboard-project-details');
+    const type = element('span', 'project-kind', project.kind === 'kitchen' ? 'Kitchen renovation' : 'Bathroom renovation');
+    const title = element('h3', '', project.client_name || 'Client not named');
+    const subtitle = element('p', 'dashboard-project-subtitle', project.title);
+    const meta = element('div', 'dashboard-project-meta');
+    const updates = stageUpdates.filter((update) => update.project_id === project.id);
+    const stageCount = window.portalStages[project.kind]?.length || 0;
+    const completedStages = updates.filter((update) => update.status === 'complete').length;
+    const percent = stageCount ? Math.round((completedStages / stageCount) * 100) : 0;
+    const progressLabel = element('div', 'progress-label');
+    progressLabel.append(
+      element('span', '', `${completedStages} of ${stageCount} stages complete`),
+      element('strong', '', `${percent}%`)
+    );
+    const progress = element('div', 'progress-track');
+    progress.setAttribute('role', 'progressbar');
+    progress.setAttribute('aria-label', `${project.client_name || 'Project'} stage completion`);
+    progress.setAttribute('aria-valuemin', '0');
+    progress.setAttribute('aria-valuemax', '100');
+    progress.setAttribute('aria-valuenow', String(percent));
+    const fill = element('span', 'progress-fill');
+    fill.style.width = `${percent}%`;
+    progress.append(fill);
+    const status = element('span', `status ${project.status}`, statusLabel(project.status));
+    const open = element('button', 'dashboard-open', 'Open project');
+    open.type = 'button';
+    open.addEventListener('click', () => {
+      openProject(project).catch((error) => notify(`Could not open this project: ${error.message}`));
+    });
+    details.append(type, title, subtitle);
+    meta.append(progressLabel, progress);
+    card.append(details, status, meta, open);
+    dashboardProjects.append(card);
+  });
+
+  const milestones = upcomingMilestones();
+  dashboardMilestones.replaceChildren();
+  if (!milestones.length) {
+    dashboardMilestones.append(element('p', 'dashboard-empty', 'No stage milestones are scheduled for the next 7 days.'));
+  }
+  milestones.slice(0, 6).forEach((milestone) => {
+    const item = element('button', 'milestone-item');
+    item.type = 'button';
+    item.setAttribute('aria-label', `Open ${milestone.project.client_name || 'project'}: ${milestone.stageName}, ${dateLabel(milestone.planned_date)}`);
+    const date = element('span', 'milestone-date', dateLabel(milestone.planned_date));
+    const copy = element('span', 'milestone-copy');
+    copy.append(
+      element('strong', '', milestone.stageName),
+      element('small', '', `${milestone.project.client_name || 'Client not named'} · ${milestone.project.title}`)
+    );
+    item.append(date, copy);
+    item.addEventListener('click', () => {
+      openProject(milestone.project).catch((error) => notify(`Could not open this project: ${error.message}`));
+    });
+    dashboardMilestones.append(item);
+  });
 }
 
 function updateProjects() {
@@ -226,6 +347,18 @@ function stageStatusControl(stageNumber, update) {
         updated_at: new Date().toISOString()
       }, { onConflict: 'project_id,stage_number' });
       if (error) throw error;
+      const savedUpdate = {
+        project_id: activeProject.id,
+        stage_number: stageNumber,
+        stage_name: stageName,
+        status: status.value,
+        planned_date: plannedDate.value || null
+      };
+      const existingUpdateIndex = stageUpdates.findIndex((item) => item.project_id === activeProject.id && item.stage_number === stageNumber);
+      if (existingUpdateIndex === -1) stageUpdates.push(savedUpdate);
+      else stageUpdates[existingUpdateIndex] = { ...stageUpdates[existingUpdateIndex], ...savedUpdate };
+      updateSummary();
+      renderDashboard();
       notify(`${stageName} update saved.`);
     } catch (error) {
       notify(`Could not save the stage update: ${error.message}`);
@@ -642,16 +775,22 @@ async function saveDecision(event) {
 }
 
 async function loadProjects() {
-  const { data, error } = await portalClient
-    .from('projects')
-    .select('id,title,client_name,reference,kind,status,project_note,start_date,duration')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
+  const [projectsResult, updatesResult] = await Promise.all([
+    portalClient
+      .from('projects')
+      .select('id,title,client_name,reference,kind,status,project_note,start_date,duration')
+      .order('created_at', { ascending: false }),
+    portalClient.from('stage_updates').select('project_id,stage_number,stage_name,status,planned_date')
+  ]);
+  if (projectsResult.error) throw projectsResult.error;
+  if (updatesResult.error) throw updatesResult.error;
   projectTable.replaceChildren();
   projectRows.clear();
-  data.forEach(buildProjectRow);
+  stageUpdates = updatesResult.data;
+  projectsResult.data.forEach(buildProjectRow);
   updateSummary();
   updateProjects();
+  renderDashboard();
 }
 
 async function startStaffPortal() {
@@ -666,6 +805,8 @@ filters.forEach((button) => button.addEventListener('click', () => {
   filters.forEach((filter) => filter.setAttribute('aria-pressed', String(filter === button)));
   updateProjects();
 }));
+window.addEventListener('hashchange', updateNavigation);
+updateNavigation();
 searchInput.addEventListener('input', updateProjects);
 document.querySelector('#open-create-project').addEventListener('click', () => {
   createProjectMessage.textContent = '';
@@ -758,6 +899,7 @@ document.querySelector('#save-project-status').addEventListener('click', async (
   badge.textContent = statusLabel(status);
   updateSummary();
   updateProjects();
+  renderDashboard();
   notify('Project status saved.');
 });
 document.querySelector('#portal-sign-out').addEventListener('click', () => {
