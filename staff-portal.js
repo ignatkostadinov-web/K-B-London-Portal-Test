@@ -315,11 +315,6 @@ function stageStatusControl(stageNumber, update) {
   note.placeholder = 'Add a short update for the customer';
   note.value = update?.note || '';
   noteLabel.append(note);
-  const shareWrap = element('label', 'issue-share-row');
-  const share = document.createElement('input');
-  share.type = 'checkbox';
-  share.checked = Boolean(update?.client_visible);
-  shareWrap.append(share, element('span', '', 'Share this stage update with the customer'));
 
   const actions = element('div', 'stage-actions');
   const uploadLabel = element('label', 'upload-button', '＋ Add photos');
@@ -329,7 +324,7 @@ function stageStatusControl(stageNumber, update) {
   upload.multiple = true;
   upload.setAttribute('aria-label', `Add photos for ${stageName}`);
   uploadLabel.append(upload);
-  const save = element('button', 'save-stage', 'Save stage update');
+  const save = element('button', 'save-stage', 'Submit');
   save.type = 'button';
   const photoList = element('div', 'stage-photos');
   save.addEventListener('click', async () => {
@@ -342,7 +337,7 @@ function stageStatusControl(stageNumber, update) {
         status: status.value,
         note: note.value.trim(),
         planned_date: plannedDate.value || null,
-        client_visible: share.checked,
+        client_visible: true,
         updated_by: window.staffContext.user.id,
         updated_at: new Date().toISOString()
       }, { onConflict: 'project_id,stage_number' });
@@ -390,7 +385,7 @@ function stageStatusControl(stageNumber, update) {
     }
   });
   actions.append(uploadLabel, save);
-  card.append(header, dateLabel, noteLabel, shareWrap, actions, photoList);
+  card.append(header, dateLabel, noteLabel, actions, photoList);
   renderStageFiles(photoList, stageNumber).catch((error) => notify(`Could not load private photos: ${error.message}`));
   return card;
 }
