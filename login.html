@@ -146,7 +146,10 @@
     const newPasswordForm = document.querySelector('#new-password-form');
     const loginOptions = document.querySelector('#login-options');
     const signInIntro = document.querySelector('#sign-in-intro');
-    const isPasswordRecovery = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+    const authLinkType = new URLSearchParams(window.location.hash.slice(1)).get('type');
+    const isPasswordRecovery = authLinkType === 'recovery';
+    const isInvitation = authLinkType === 'invite';
+    const isPasswordSetup = isPasswordRecovery || isInvitation;
     let selectedRole = null;
     const routeBase = window.location.pathname.slice(0, window.location.pathname.lastIndexOf('/') + 1);
     const supabaseClient = window.supabase.createClient(
@@ -215,9 +218,11 @@
       }
     });
 
-    if (isPasswordRecovery) {
-      document.querySelector('#sign-in-title').textContent = 'Choose a new password';
-      signInIntro.textContent = 'Choose a new password with at least 8 characters.';
+    if (isPasswordSetup) {
+      document.querySelector('#sign-in-title').textContent = isInvitation ? 'Set your password' : 'Choose a new password';
+      signInIntro.textContent = isInvitation
+        ? 'Choose a password with at least 8 characters to finish setting up your customer account.'
+        : 'Choose a new password with at least 8 characters.';
       loginOptions.hidden = true;
       signInForm.hidden = true;
       resetPasswordButton.hidden = true;
@@ -276,7 +281,7 @@
         document.querySelector('#sign-in-title').textContent = 'Sign in';
         loginOptions.hidden = false;
         signInIntro.textContent = 'Choose your account type, then sign in with your invited account.';
-        showMessage('Password updated. Sign in with your new password.', 'success');
+        showMessage(isInvitation ? 'Password set. Sign in with your new customer account.' : 'Password updated. Sign in with your new password.', 'success');
       } catch (error) {
         showMessage(error.message || 'Could not update your password.', 'error');
       }
@@ -287,9 +292,9 @@
         showMessage('Could not check the current sign-in session.', 'error');
         return;
       }
-      if (data.session && isPasswordRecovery) {
+      if (data.session && isPasswordSetup) {
         newPasswordForm.hidden = false;
-      } else if (data.session && !isPasswordRecovery && selectedRole) {
+      } else if (data.session && !isPasswordSetup && selectedRole) {
         routeSignedInUser(data.session.user).catch((routeError) => showMessage(routeError.message, 'error'));
       }
     });

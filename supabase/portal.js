@@ -1,6 +1,6 @@
 (function () {
   const routeBase = window.location.pathname.slice(0, window.location.pathname.lastIndexOf('/') + 1);
-  const client = window.supabase.createClient(
+  const client = window.portalAuthClient || window.supabase.createClient(
     window.supabasePortalConfig.url,
     window.supabasePortalConfig.publishableKey,
     { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true } }

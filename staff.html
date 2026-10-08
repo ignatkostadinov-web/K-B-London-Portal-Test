@@ -156,9 +156,26 @@
     .upload-button input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; clip-path: inset(50%); }
     .save-stage { min-height: 31px; padding: 0 10px; border: 0; border-radius: 4px; background: var(--gold); color: var(--slate-dark); font-size: 9px; font-weight: 700; cursor: pointer; }
     .stage-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-top: 10px; }
-    .photo-item { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: 4px; background: #eff2ee; }
-    .photo-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .photo-item { position: relative; overflow: hidden; border-radius: 4px; background: #eff2ee; }
+    .photo-item img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    .photo-share { display: flex; align-items: center; gap: 5px; padding: 5px 6px; background: #fff; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 4px 4px; color: var(--green); font-size: 9px; font-weight: 700; cursor: pointer; }
+    .photo-share input { margin: 0; accent-color: var(--green); }
     .photo-remove { position: absolute; top: 5px; right: 5px; display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid #ffffffbb; border-radius: 50%; background: #202723cc; color: white; font-size: 14px; cursor: pointer; }
+    .project-document-list { display: grid; gap: 6px; }
+    .project-document-row { overflow: hidden; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+    .project-document-row summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; color: #805d00; font-size: 9px; font-weight: 700; cursor: pointer; list-style: none; }
+    .project-document-row summary::-webkit-details-marker { display: none; }
+    .project-document-row summary::after { color: var(--muted); font: 14px var(--font-body); content: '+'; }
+    .project-document-row[open] summary::after { content: '−'; }
+    .project-document-row summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+    .project-document-options { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; padding: 8px 10px; border-top: 1px solid var(--line); background: #f8f9f7; }
+    .project-document-link { padding: 0; border: 0; background: none; color: #805d00; font: 700 9px var(--font-body); text-decoration: underline; cursor: pointer; }
+    .project-document-share { display: inline-flex; align-items: center; gap: 4px; color: var(--green); font-size: 9px; font-weight: 700; cursor: pointer; }
+    .project-document-share input { margin: 0; accent-color: var(--green); }
+    .project-document-remove { min-height: 27px; margin-left: auto; padding: 0 9px; border: 1px solid #e4caca; border-radius: 4px; background: #fff8f7; color: #8a3636; font: 700 9px var(--font-body); cursor: pointer; }
+    .project-document-remove:hover { border-color: #c98787; background: #fff0ee; }
+    .project-document-error { flex-basis: 100%; color: #8a3636; font-size: 9px; line-height: 1.4; }
+    .project-document-error:empty { display: none; }
     .issue-workspace { display: grid; gap: 12px; padding: 16px 22px 22px; border-top: 1px solid var(--line); background: #f7f8f7; }
     .issue-workspace-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .issue-workspace-head h3 { margin: 0 0 3px; font: 600 14px var(--font-display); }
@@ -176,6 +193,22 @@
     .issue-status.resolved { background: #e5f2e9; color: #205b36; }
     .issue-edit-button { padding: 0; border: 0; background: none; color: #805d00; font-size: 9px; font-weight: 700; cursor: pointer; }
     .issue-shared { grid-column: 1 / -1; color: #205b36 !important; font-weight: 700; }
+    .message-workspace { display: grid; gap: 11px; padding: 16px 22px 20px; border-top: 1px solid var(--line); background: #f7f8f7; }
+    .message-workspace h3 { margin: 0 0 3px; font: 600 14px var(--font-display); }
+    .message-workspace-head p { margin: 0; color: var(--muted); font-size: 10px; }
+    .project-message-list { display: grid; gap: 7px; max-height: 270px; overflow-y: auto; }
+    .project-message { padding: 9px 11px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+    .project-message.customer-message { border-color: #e8d8b1; background: #fffaf0; }
+    .project-message-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 4px; color: var(--muted); font-size: 9px; }
+    .project-message-head strong { color: var(--ink); font-size: 10px; }
+    .project-message p { margin: 0; font-size: 10px; line-height: 1.55; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .project-message-empty, .project-message-status { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .staff-message-form { display: grid; gap: 8px; }
+    .staff-message-form label { font-size: 9px; font-weight: 700; }
+    .staff-message-form textarea { width: 100%; min-height: 72px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 4px; resize: vertical; font: 10px/1.45 var(--font-body); }
+    .staff-message-form textarea:focus { outline: 2px solid #fffbeb; border-color: var(--gold); }
+    .staff-message-actions { display: flex; justify-content: flex-end; }
+    .staff-message-actions button:disabled { cursor: wait; opacity: .65; }
     .issue-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 13px; border: 1px solid #d9d1b9; border-radius: 6px; background: #fff; }
     .issue-form[hidden] { display: none; }
     .issue-form h4, .issue-form .issue-private-note, .issue-form .issue-full, .issue-form .issue-share-row, .issue-form .issue-form-actions { grid-column: 1 / -1; }
@@ -479,6 +512,16 @@
     <div class="dialog-layout">
       <header class="dialog-heading"><div><p class="eyebrow">Project workspace</p><h2 id="project-dialog-title">Client project</h2><p id="project-dialog-reference"></p></div><button class="dialog-close" type="button" aria-label="Close project details">×</button></header>
       <div class="project-status-edit"><label for="project-status-select">Overall project status</label><select id="project-status-select"><option value="progress">In Progress</option><option value="finishing">In Finishing Stages</option><option value="completed">Completed</option></select><button class="save-stage" id="save-project-status" type="button">Save status</button><span class="storage-note">Changes are saved to the secure project database</span></div>
+      <section class="message-workspace" aria-labelledby="project-message-title">
+        <div class="message-workspace-head"><h3 id="project-message-title">Messages with the customer</h3><p>Messages sent from either portal are saved to this project conversation.</p></div>
+        <p class="project-message-status" id="project-message-status" role="status" aria-live="polite">Loading project messages…</p>
+        <div class="project-message-list" id="project-message-list" aria-label="Project messages" aria-live="polite"></div>
+        <form class="staff-message-form" id="staff-message-form">
+          <label for="staff-message-text">Reply to the customer</label>
+          <textarea id="staff-message-text" maxlength="5000" required placeholder="Write a message to the customer…"></textarea>
+          <div class="staff-message-actions"><button class="save-stage" id="send-staff-message" type="submit">Send reply</button></div>
+        </form>
+      </section>
       <section class="decision-workspace" aria-labelledby="project-files-title">
         <div class="decision-workspace-head"><div><h3 id="project-files-title">Project documents</h3><p>Files are private unless you explicitly share them with this project's customer.</p></div></div>
         <label for="project-file-category">File type</label>
@@ -486,7 +529,7 @@
         <label><input id="project-file-share" type="checkbox"> Share uploaded documents with this customer</label>
         <label for="project-file-upload">Upload documents</label>
         <input id="project-file-upload" type="file" multiple accept=".pdf,image/*,.doc,.docx,.xls,.xlsx">
-        <div id="project-document-list" aria-live="polite"></div>
+        <div class="project-document-list" id="project-document-list" aria-live="polite"></div>
       </section>
       <div class="stage-list" id="stage-list"></div>
       <section class="decision-workspace" aria-labelledby="decision-workspace-title">
@@ -626,6 +669,6 @@
   <script src="supabase/config.js"></script>
   <script src="supabase/portal.js"></script>
   <script src="projects.js"></script>
-  <script src="staff-portal.js"></script>
+  <script src="staff-portal.js?v=messages-20261008-2"></script>
   </body>
 </html>

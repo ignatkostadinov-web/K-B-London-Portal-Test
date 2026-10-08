@@ -9,6 +9,9 @@ const issueList = document.querySelector('#issue-list');
 const issueForm = document.querySelector('#issue-form');
 const decisionList = document.querySelector('#decision-list-staff');
 const decisionForm = document.querySelector('#decision-form');
+const projectMessageList = document.querySelector('#project-message-list');
+const projectMessageStatus = document.querySelector('#project-message-status');
+const staffMessageForm = document.querySelector('#staff-message-form');
 const projectStatusSelect = document.querySelector('#project-status-select');
 const toast = document.querySelector('#dialog-toast');
 const filters = [...document.querySelectorAll('.filter')];
@@ -25,6 +28,7 @@ let activeProject = null;
 let editingIssueId = null;
 let editingDecisionId = null;
 let toastTimer;
+let staffMessageChannel;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -285,6 +289,54 @@ async function queryProject(table, projectId, columns = '*') {
   return data;
 }
 
+async function loadProjectMessages(projectId) {
+  const { data, error } = await portalClient.from('project_messages')
+    .select('id,sender_role,body,created_at')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  renderProjectMessages(data.reverse());
+}
+
+function renderProjectMessages(messages) {
+  projectMessageList.replaceChildren();
+  if (!messages.length) {
+    projectMessageList.append(element('p', 'project-message-empty', 'No messages yet. Customer messages from the client portal will appear here.'));
+  } else {
+    messages.forEach((message) => {
+      const entry = element('article', `project-message${message.sender_role === 'client' ? ' customer-message' : ''}`);
+      const header = element('div', 'project-message-head');
+      const sender = element('strong', '', message.sender_role === 'client' ? 'Customer' : 'K&B project team');
+      const date = element('time', '', new Date(message.created_at).toLocaleString('en-GB'));
+      date.dateTime = message.created_at;
+      const body = element('p', '', message.body);
+      header.append(sender, date);
+      entry.append(header, body);
+      projectMessageList.append(entry);
+    });
+  }
+  projectMessageStatus.textContent = 'This conversation is saved to the project and visible in both portals.';
+  projectMessageList.scrollTop = projectMessageList.scrollHeight;
+}
+
+function subscribeToStaffMessages(projectId) {
+  if (staffMessageChannel) portalClient.removeChannel(staffMessageChannel);
+  staffMessageChannel = portalClient
+    .channel(`staff-project-messages-${projectId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'project_messages', filter: `project_id=eq.${projectId}` }, () => {
+      loadProjectMessages(projectId).catch((error) => {
+        console.error('Could not refresh project messages.', error);
+        projectMessageStatus.textContent = `Could not refresh messages: ${error.message}`;
+      });
+    })
+    .subscribe((status, error) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.error(`Staff project message subscription ${status.toLocaleLowerCase()}.`, error);
+        notify('Live message updates are unavailable. Refresh the project to see new messages.');
+      }
+    });
+}
+
 function stageStatusControl(stageNumber, update) {
   const card = element('article', 'stage-card');
   const header = element('div', 'stage-card-head');
@@ -372,11 +424,11 @@ function stageStatusControl(stageNumber, update) {
         await uploadProjectFile(file, {
           category: 'stage-photo',
           stageNumber,
-          clientVisible: false
+          clientVisible: true
         });
       }
       await renderStageFiles(photoList, stageNumber);
-      if (files.length) notify('Photos uploaded privately. Mark each one shared only when approved.');
+      if (files.length) notify('Photos uploaded and visible to the customer.');
     } catch (error) {
       notify(`Could not upload photos: ${error.message}`);
     } finally {
@@ -433,27 +485,6 @@ async function renderStageFiles(container, stageNumber) {
     const { data, error: urlError } = await portalClient.storage.from('project-files').createSignedUrl(file.storage_path, 60);
     if (urlError) throw urlError;
     image.src = data.signedUrl;
-    const shareLabel = element('label', 'photo-share');
-    const share = document.createElement('input');
-    share.type = 'checkbox';
-    share.checked = file.client_visible;
-    share.setAttribute('aria-label', `Share ${file.file_name} with customer`);
-    share.addEventListener('change', async () => {
-      share.disabled = true;
-      try {
-        const { error: updateError } = await portalClient.from('project_files')
-          .update({ client_visible: share.checked })
-          .eq('id', file.id);
-        if (updateError) throw updateError;
-        notify(share.checked ? 'Photo shared with the customer.' : 'Photo is now staff-only.');
-      } catch (error) {
-        share.checked = !share.checked;
-        notify(`Could not change photo visibility: ${error.message}`);
-      } finally {
-        share.disabled = false;
-      }
-    });
-    shareLabel.append(share, document.createTextNode('Visible to customer'));
     const remove = element('button', 'photo-remove', '×');
     remove.type = 'button';
     remove.setAttribute('aria-label', `Remove ${file.file_name}`);
@@ -471,7 +502,7 @@ async function renderStageFiles(container, stageNumber) {
         notify(`Could not remove photo: ${error.message}`);
       }
     });
-    item.append(image, shareLabel, remove);
+    item.append(image, remove);
     container.append(item);
   }
 }
@@ -487,14 +518,24 @@ async function renderDocuments() {
   if (error) throw error;
   list.replaceChildren();
   for (const file of files) {
-    const row = element('div', 'photo-item');
-    const link = element('a', 'issue-edit-button', file.file_name);
-    const { data: signed, error: signedError } = await portalClient.storage.from('project-files').createSignedUrl(file.storage_path, 60, { download: true });
+    const row = document.createElement('details');
+    row.className = 'project-document-row';
+    const summary = element('summary', '', file.file_name);
+    const options = element('div', 'project-document-options');
+    const open = element('a', 'project-document-link', 'Open document');
+    const download = element('a', 'project-document-link', 'Download');
+    const removeErrorMessage = element('span', 'project-document-error');
+    const { data: signed, error: signedError } = await portalClient.storage.from('project-files').createSignedUrl(file.storage_path, 60);
     if (signedError) throw signedError;
-    link.href = signed.signedUrl;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    const visibility = element('label', 'photo-share');
+    const { data: downloadable, error: downloadError } = await portalClient.storage.from('project-files').createSignedUrl(file.storage_path, 60, { download: true });
+    if (downloadError) throw downloadError;
+    open.href = signed.signedUrl;
+    open.target = '_blank';
+    open.rel = 'noopener';
+    download.href = downloadable.signedUrl;
+    download.target = '_blank';
+    download.rel = 'noopener';
+    const visibility = element('label', 'project-document-share');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = file.client_visible;
@@ -512,23 +553,31 @@ async function renderDocuments() {
       }
     });
     visibility.append(checkbox, document.createTextNode('Visible to customer'));
-    const remove = element('button', 'photo-remove', 'Remove');
+    const remove = element('button', 'project-document-remove', 'Remove');
     remove.type = 'button';
     remove.addEventListener('click', async () => {
       remove.disabled = true;
       try {
         const { error: removeError } = await portalClient.storage.from('project-files').remove([file.storage_path]);
         if (removeError) throw removeError;
-        const { error: metadataError } = await portalClient.from('project_files').delete().eq('id', file.id);
+        const { data: deletedFiles, error: metadataError } = await portalClient.from('project_files')
+          .delete()
+          .eq('id', file.id)
+          .select('id');
         if (metadataError) throw metadataError;
+        if (!deletedFiles?.length) {
+          throw new Error('The file was removed from storage, but its project record could not be deleted. Run the latest Supabase portal upgrade SQL, then try Remove again.');
+        }
         await renderDocuments();
         notify('Document removed.');
       } catch (error) {
         remove.disabled = false;
+        removeErrorMessage.textContent = `Could not remove document: ${error.message}`;
         notify(`Could not remove document: ${error.message}`);
       }
     });
-    row.append(link, visibility, remove);
+    options.append(open, download, visibility, remove, removeErrorMessage);
+    row.append(summary, options);
     list.append(row);
   }
 }
@@ -542,12 +591,19 @@ async function openProject(project) {
   stageList.replaceChildren();
   issueList.replaceChildren();
   decisionList.replaceChildren();
+  projectMessageList.replaceChildren();
+  projectMessageStatus.textContent = 'Loading project messages…';
   projectDialog.showModal();
-  const [updates, issues, decisions] = await Promise.all([
+  const [updates, issues, decisions, messages] = await Promise.all([
     queryProject('stage_updates', project.id),
     queryProject('internal_issues', project.id),
-    queryProject('project_decisions', project.id)
+    queryProject('project_decisions', project.id),
+    portalClient.from('project_messages')
+      .select('id,sender_role,body,created_at')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false })
   ]);
+  if (messages.error) throw messages.error;
   window.currentProjectIssues = issues;
   window.currentProjectDecisions = decisions;
   window.portalStages[project.kind].forEach((_, index) => {
@@ -556,6 +612,8 @@ async function openProject(project) {
   await renderIssues(issues);
   await renderDecisions(decisions);
   await renderDocuments();
+  renderProjectMessages(messages.data.reverse());
+  subscribeToStaffMessages(project.id);
 }
 
 async function renderIssues(issues) {
@@ -824,6 +882,10 @@ createProjectForm.addEventListener('submit', (event) => {
   });
 });
 document.querySelector('.dialog-close').addEventListener('click', () => projectDialog.close());
+projectDialog.addEventListener('close', () => {
+  if (staffMessageChannel) portalClient.removeChannel(staffMessageChannel);
+  staffMessageChannel = null;
+});
 projectDialog.addEventListener('click', (event) => {
   if (event.target === projectDialog) projectDialog.close();
 });
@@ -877,6 +939,48 @@ document.querySelector('#project-file-upload').addEventListener('change', async 
 });
 issueForm.addEventListener('submit', (event) => {
   saveIssue(event).catch((error) => notify(`Could not save the issue: ${error.message}`));
+});
+staffMessageForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!activeProject) {
+    notify('Open a project before sending a reply.');
+    return;
+  }
+  const message = document.querySelector('#staff-message-text').value.trim();
+  if (!message) {
+    notify('Write a reply before sending.');
+    return;
+  }
+  const projectId = activeProject.id;
+  const button = document.querySelector('#send-staff-message');
+  button.disabled = true;
+  let saved = false;
+  try {
+    const { error } = await portalClient.from('project_messages').insert({
+      project_id: projectId,
+      sender_id: window.staffContext.user.id,
+      sender_role: 'staff',
+      body: message
+    });
+    if (error) throw error;
+    saved = true;
+    staffMessageForm.reset();
+    notify('Reply sent and recorded in the project conversation.');
+    try {
+      await loadProjectMessages(projectId);
+    } catch (error) {
+      projectMessageStatus.textContent = `Reply was saved, but messages could not be refreshed: ${error.message}`;
+      console.error('Could not refresh messages after sending a reply.', error);
+      notify(`Reply was saved, but the conversation could not refresh: ${error.message}`);
+    }
+  } catch (error) {
+    console.error('Could not send project reply.', error);
+    notify(saved
+      ? `Reply was saved, but the conversation could not refresh: ${error.message}`
+      : `Could not send the reply: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
 });
 document.querySelector('#save-project-status').addEventListener('click', async () => {
   if (!activeProject) return;

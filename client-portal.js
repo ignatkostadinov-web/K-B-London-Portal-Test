@@ -9,6 +9,8 @@ let toastTimer;
 let projectChannel;
 let refreshTimer;
 let subscribedProjectId;
+let currentClientProjectId;
+let currentClientUserId;
 let previousSnapshot;
 let initialProjectLoadComplete = false;
 let notificationCount = 0;
@@ -393,13 +395,20 @@ async function renderFiles(files, client) {
   document.querySelector('#document-count').textContent = `${documents.length} ${documents.length === 1 ? 'file' : 'files'}`;
   list.replaceChildren();
   documents.forEach((file) => {
-    const link = document.createElement('a');
-    link.className = 'design-document-link';
-    link.textContent = `Download ${file.file_name}`;
-    link.href = '#';
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.addEventListener('click', async (event) => {
+    const documentMenu = document.createElement('details');
+    documentMenu.className = 'design-document';
+    const summary = document.createElement('summary');
+    summary.textContent = file.file_name;
+    const options = document.createElement('div');
+    options.className = 'design-document-preview';
+    const actions = document.createElement('div');
+    actions.className = 'design-document-actions';
+
+    const openLink = document.createElement('a');
+    openLink.className = 'design-document-link primary';
+    openLink.textContent = 'Open document';
+    openLink.href = '#';
+    openLink.addEventListener('click', async (event) => {
       event.preventDefault();
       const popup = window.open('about:blank', '_blank');
       if (!popup) {
@@ -408,13 +417,36 @@ async function renderFiles(files, client) {
       }
       popup.opener = null;
       try {
-        popup.location.href = await signedUrl(client, file.storage_path, true);
+        popup.location.href = await signedUrl(client, file.storage_path);
       } catch (error) {
         popup.close();
         showToast(`Could not open this file: ${error.message}`);
       }
     });
-    list.append(link);
+
+    const downloadLink = document.createElement('a');
+    downloadLink.className = 'design-document-link';
+    downloadLink.textContent = 'Download';
+    downloadLink.href = '#';
+    downloadLink.addEventListener('click', async (event) => {
+      event.preventDefault();
+      try {
+        const url = await signedUrl(client, file.storage_path, true);
+        const download = document.createElement('a');
+        download.href = url;
+        download.download = file.file_name;
+        document.body.append(download);
+        download.click();
+        download.remove();
+      } catch (error) {
+        showToast(`Could not download this file: ${error.message}`);
+      }
+    });
+
+    actions.append(openLink, downloadLink);
+    options.append(actions);
+    documentMenu.append(summary, options);
+    list.append(documentMenu);
   });
 }
 
@@ -496,6 +528,8 @@ async function loadPortal({ notifyChanges = false } = {}) {
   const context = await window.portalAuth.requireRole('client');
   if (!context) return;
   const { client, profile, user } = context;
+  currentClientProjectId = profile.project_id;
+  currentClientUserId = user.id;
   const { data: project, error: projectError } = await client
     .from('projects')
     .select('id,title,client_name,reference,kind,status,project_note,start_date,duration')
@@ -503,14 +537,15 @@ async function loadPortal({ notifyChanges = false } = {}) {
     .single();
   if (projectError) throw projectError;
 
-  const [updatesResult, decisionsResult, responsesResult, clientUpdatesResult, filesResult] = await Promise.all([
+  const [updatesResult, decisionsResult, responsesResult, clientUpdatesResult, filesResult, messagesResult] = await Promise.all([
     client.from('stage_updates').select('stage_number,stage_name,status,note,planned_date,updated_at').eq('project_id', project.id).eq('client_visible', true).order('stage_number'),
     client.from('project_decisions').select('id,title,proposed_option,cost_impact,schedule_impact,client_note,status,client_visible,updated_at').eq('project_id', project.id).eq('client_visible', true).order('updated_at', { ascending: false }),
     client.from('decision_responses').select('decision_id,response,responded_at').eq('project_id', project.id),
     client.from('client_updates').select('id,title,message,created_at').eq('project_id', project.id).order('created_at', { ascending: false }),
-    client.from('project_files').select('id,storage_path,file_name,content_type,category,stage_number,client_visible,created_at').eq('project_id', project.id).eq('client_visible', true)
+    client.from('project_files').select('id,storage_path,file_name,content_type,category,stage_number,client_visible,created_at').eq('project_id', project.id).eq('client_visible', true),
+    client.from('project_messages').select('id,sender_role,body,created_at').eq('project_id', project.id).order('created_at', { ascending: false })
   ]);
-  for (const result of [updatesResult, decisionsResult, responsesResult, clientUpdatesResult, filesResult]) {
+  for (const result of [updatesResult, decisionsResult, responsesResult, clientUpdatesResult, filesResult, messagesResult]) {
     if (result.error) throw result.error;
   }
   renderProject(project, user);
@@ -518,12 +553,55 @@ async function loadPortal({ notifyChanges = false } = {}) {
   renderDecisions(decisionsResult.data, responsesResult.data, client);
   renderFiles(filesResult.data, client);
   renderSiteLog(updatesResult.data, clientUpdatesResult.data, filesResult.data, client);
+  renderMessages(messagesResult.data.reverse());
   const snapshot = visibleProjectSnapshot(project, updatesResult.data, decisionsResult.data, clientUpdatesResult.data, filesResult.data);
   if (notifyChanges && initialProjectLoadComplete) announceProjectChanges(snapshot);
   else previousSnapshot = snapshot;
   document.body.style.visibility = 'visible';
   initialProjectLoadComplete = true;
   subscribeToProjectChanges(client, project.id);
+}
+
+function renderMessages(messages) {
+  const list = document.querySelector('#message-list');
+  const status = document.querySelector('#message-status');
+  list.replaceChildren();
+  if (!messages.length) {
+    const empty = document.createElement('li');
+    empty.className = 'message-empty';
+    empty.textContent = 'No messages yet. Send a message below to start the conversation.';
+    list.append(empty);
+  } else {
+    messages.forEach((message) => {
+      const entry = document.createElement('li');
+      entry.className = `message-entry${message.sender_role === 'client' ? ' client-message' : ''}`;
+      const header = document.createElement('div');
+      header.className = 'message-entry-head';
+      const sender = document.createElement('strong');
+      sender.textContent = message.sender_role === 'client' ? 'You' : 'Project team';
+      const date = document.createElement('time');
+      date.dateTime = message.created_at;
+      date.textContent = new Date(message.created_at).toLocaleString('en-GB');
+      const body = document.createElement('p');
+      body.textContent = message.body;
+      header.append(sender, date);
+      entry.append(header, body);
+      list.append(entry);
+    });
+  }
+  status.textContent = 'Messages are saved to your project and visible to the project team.';
+  list.scrollTop = list.scrollHeight;
+}
+
+async function refreshClientMessages() {
+  if (!currentClientProjectId) return;
+  const { data, error } = await window.portalAuth.client
+    .from('project_messages')
+    .select('id,sender_role,body,created_at')
+    .eq('project_id', currentClientProjectId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  renderMessages(data.reverse());
 }
 
 function scheduleProjectRefresh() {
@@ -560,6 +638,12 @@ function subscribeToProjectChanges(client, projectId) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'project_decisions', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'client_updates', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'project_files', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'project_messages', filter: `project_id=eq.${projectId}` }, () => {
+      refreshClientMessages().catch((error) => {
+        console.error('Could not refresh project messages.', error);
+        showToast(`Could not refresh messages: ${error.message}`);
+      });
+    })
     .subscribe((status, error) => {
       if (status === 'SUBSCRIBED') {
         scheduleProjectRefresh();
@@ -571,17 +655,55 @@ function subscribeToProjectChanges(client, projectId) {
 }
 
 document.querySelectorAll('.message-trigger').forEach((button) => {
-  button.addEventListener('click', () => messageDialog.showModal());
+  button.addEventListener('click', () => {
+    messageDialog.showModal();
+    document.querySelector('#message-text').focus();
+    refreshClientMessages().catch((error) => {
+      console.error('Could not load project messages.', error);
+      document.querySelector('#message-status').textContent = `Could not load messages: ${error.message}`;
+    });
+  });
 });
 document.querySelector('.close-button').addEventListener('click', () => messageDialog.close());
 document.querySelector('.close-action').addEventListener('click', () => messageDialog.close());
 messageDialog.addEventListener('click', (event) => {
   if (event.target === messageDialog) messageDialog.close();
 });
-document.querySelector('#message-form').addEventListener('submit', (event) => {
+document.querySelector('#message-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  messageDialog.close();
-  showToast('Messaging is not connected yet. Please contact your project coordinator directly.');
+  const form = event.currentTarget;
+  const text = document.querySelector('#message-text').value.trim();
+  if (!text) {
+    showToast('Write a message before sending.');
+    return;
+  }
+  if (!currentClientProjectId || !currentClientUserId) {
+    showToast('Your project is still loading. Please try again.');
+    return;
+  }
+  const button = document.querySelector('#send-message-button');
+  button.disabled = true;
+  let saved = false;
+  try {
+    const { error } = await window.portalAuth.client.from('project_messages').insert({
+      project_id: currentClientProjectId,
+      sender_id: currentClientUserId,
+      sender_role: 'client',
+      body: text
+    });
+    if (error) throw error;
+    saved = true;
+    form.reset();
+    await refreshClientMessages();
+    showToast('Your message was sent and saved to this project.');
+  } catch (error) {
+    console.error('Could not send project message.', error);
+    showToast(saved
+      ? `Your message was saved, but the conversation could not refresh: ${error.message}`
+      : `Could not send your message: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
 });
 document.querySelector('#portal-sign-out').addEventListener('click', () => {
   window.portalAuth.signOut().catch((error) => showToast(`Could not sign out: ${error.message}`));
