@@ -345,6 +345,8 @@
     .top-actions { gap: 13px; }
     .icon-button { width: 34px; height: 34px; border: 0; background: transparent; color: #30363b; font-size: 15px; }
     .icon-button:hover { background: #eeeae3; }
+    .live-notification { position: relative; color: #30363b; text-decoration: none; }
+    .live-notification .dot { position: absolute; top: 6px; right: 5px; width: 8px; height: 8px; border: 1px solid var(--paper); border-radius: 50%; background: #c18a25; }
     .header-account { display: flex; align-items: center; gap: 9px; }
     .header-account .avatar { width: 32px; height: 32px; font-size: 10px; }
     .header-account > strong { max-width: 112px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
@@ -562,7 +564,7 @@
     <main id="overview">
       <header class="topbar">
         <div class="breadcrumb"><span>My project</span><span aria-hidden="true">/</span><strong id="welcome-title">Your project</strong><small id="project-reference"></small></div>
-        <div class="top-actions"><button class="icon-button message-trigger" type="button" aria-label="Message your project coordinator" title="Message your project coordinator"><span aria-hidden="true">✉</span></button><div class="header-account"><div class="avatar" aria-hidden="true">K&amp;B</div><strong id="header-client-name">Customer</strong></div><button class="mobile-sign-out" id="mobile-sign-out" type="button">Sign out</button></div>
+        <div class="top-actions"><a class="icon-button live-notification" id="client-notification-link" href="#updates" aria-label="New project update" title="New project update" hidden><span aria-hidden="true">♧</span><i class="dot" id="client-notification-dot" aria-hidden="true"></i></a><button class="icon-button message-trigger" type="button" aria-label="Message your project coordinator" title="Message your project coordinator"><span aria-hidden="true">✉</span></button><div class="header-account"><div class="avatar" aria-hidden="true">K&amp;B</div><strong id="header-client-name">Customer</strong></div><button class="mobile-sign-out" id="mobile-sign-out" type="button">Sign out</button></div>
       </header>
       <div class="content">
         <p class="demo-banner" hidden id="portal-error" role="alert"></p>

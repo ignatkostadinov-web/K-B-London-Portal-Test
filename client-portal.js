@@ -4,7 +4,16 @@ const decisionList = document.querySelector('#client-decision-list');
 const toast = document.querySelector('.toast');
 const messageDialog = document.querySelector('#message-dialog');
 const statusLabels = { progress: 'In progress', finishing: 'In finishing stages', completed: 'Completed' };
+const notificationLink = document.querySelector('#client-notification-link');
 let toastTimer;
+let projectChannel;
+let refreshTimer;
+let subscribedProjectId;
+let previousSnapshot;
+let initialProjectLoadComplete = false;
+let notificationCount = 0;
+let refreshInProgress = false;
+let refreshRequested = false;
 
 function showToast(message) {
   toast.textContent = message;
@@ -16,6 +25,47 @@ function showToast(message) {
 function dateLabel(value) {
   if (!value) return '';
   return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function visibleProjectSnapshot(project, updates, decisions, clientUpdates, files) {
+  const keyedRecords = (records, key, fields) => Object.fromEntries(records.map((record) => [
+    record[key],
+    JSON.stringify(fields.map((field) => record[field]))
+  ]));
+  return {
+    project: JSON.stringify([project.title, project.reference, project.kind, project.status, project.project_note, project.start_date, project.duration]),
+    stages: keyedRecords(updates, 'stage_number', ['stage_name', 'status', 'note', 'planned_date', 'updated_at']),
+    decisions: keyedRecords(decisions, 'id', ['title', 'proposed_option', 'cost_impact', 'schedule_impact', 'client_note', 'status', 'updated_at']),
+    updates: keyedRecords(clientUpdates, 'id', ['title', 'message', 'created_at']),
+    files: keyedRecords(files, 'id', ['file_name', 'category', 'stage_number', 'created_at'])
+  };
+}
+
+function changedRecords(previous, current) {
+  const keys = new Set([...Object.keys(previous), ...Object.keys(current)]);
+  return [...keys].some((key) => previous[key] !== current[key]);
+}
+
+function announceProjectChanges(snapshot) {
+  if (!previousSnapshot) {
+    previousSnapshot = snapshot;
+    return;
+  }
+
+  const messages = [];
+  if (previousSnapshot.project !== snapshot.project) messages.push('Your project details have been updated.');
+  if (changedRecords(previousSnapshot.stages, snapshot.stages)) messages.push('Your project progress has been updated.');
+  if (changedRecords(previousSnapshot.updates, snapshot.updates)) messages.push('Your project team shared a new update.');
+  if (changedRecords(previousSnapshot.decisions, snapshot.decisions)) messages.push('Your project decisions have been updated.');
+  if (changedRecords(previousSnapshot.files, snapshot.files)) messages.push('Your team shared new project files or photos.');
+  previousSnapshot = snapshot;
+
+  if (!messages.length) return;
+  notificationCount += messages.length;
+  notificationLink.hidden = false;
+  notificationLink.setAttribute('aria-label', `${notificationCount} new project ${notificationCount === 1 ? 'update' : 'updates'}. View updates.`);
+  notificationLink.title = `${notificationCount} new project ${notificationCount === 1 ? 'update' : 'updates'}`;
+  showToast(messages.join(' '));
 }
 
 function setStatus(status) {
@@ -160,9 +210,13 @@ function renderStageGrid(project, updates, files, client) {
   renderProjectJourney(stageNames, updates);
   renderUpcomingStages(stageNames, updates);
 
-  const next = stageNames
-    .map((name, index) => ({ name, index, update: updates.find((item) => item.stage_number === index + 1) }))
-    .find(({ update }) => update?.status !== 'complete');
+  const currentUpdate = updates.find((item) => item.status === 'in-progress');
+  const nextIndex = currentUpdate
+    ? currentUpdate.stage_number - 1
+    : stageNames.findIndex((_, index) => updates.find((item) => item.stage_number === index + 1)?.status !== 'complete');
+  const next = nextIndex === -1
+    ? null
+    : { name: stageNames[nextIndex], update: updates.find((item) => item.stage_number === nextIndex + 1) };
   if (next) {
     document.querySelector('#journey-current-title').textContent = next.update?.status === 'in-progress'
       ? `${next.name} is underway`
@@ -438,7 +492,7 @@ function renderSiteLog(updates, clientUpdates, files, client) {
   });
 }
 
-async function loadPortal() {
+async function loadPortal({ notifyChanges = false } = {}) {
   const context = await window.portalAuth.requireRole('client');
   if (!context) return;
   const { client, profile, user } = context;
@@ -464,7 +518,56 @@ async function loadPortal() {
   renderDecisions(decisionsResult.data, responsesResult.data, client);
   renderFiles(filesResult.data, client);
   renderSiteLog(updatesResult.data, clientUpdatesResult.data, filesResult.data, client);
+  const snapshot = visibleProjectSnapshot(project, updatesResult.data, decisionsResult.data, clientUpdatesResult.data, filesResult.data);
+  if (notifyChanges && initialProjectLoadComplete) announceProjectChanges(snapshot);
+  else previousSnapshot = snapshot;
   document.body.style.visibility = 'visible';
+  initialProjectLoadComplete = true;
+  subscribeToProjectChanges(client, project.id);
+}
+
+function scheduleProjectRefresh() {
+  window.clearTimeout(refreshTimer);
+  refreshTimer = window.setTimeout(() => {
+    if (refreshInProgress) {
+      refreshRequested = true;
+      return;
+    }
+    refreshInProgress = true;
+    loadPortal({ notifyChanges: true })
+      .catch((error) => {
+        console.error('Could not refresh live customer project updates.', error);
+        showToast('A project update arrived, but could not be loaded. Please refresh the page.');
+      })
+      .finally(() => {
+        refreshInProgress = false;
+        if (refreshRequested) {
+          refreshRequested = false;
+          scheduleProjectRefresh();
+        }
+      });
+  }, 250);
+}
+
+function subscribeToProjectChanges(client, projectId) {
+  if (projectChannel && subscribedProjectId === projectId) return;
+  if (projectChannel) client.removeChannel(projectChannel);
+  subscribedProjectId = projectId;
+  projectChannel = client
+    .channel(`client-project-updates-${projectId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` }, scheduleProjectRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stage_updates', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'project_decisions', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'client_updates', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'project_files', filter: `project_id=eq.${projectId}` }, scheduleProjectRefresh)
+    .subscribe((status, error) => {
+      if (status === 'SUBSCRIBED') {
+        scheduleProjectRefresh();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.error(`Customer project realtime subscription ${status.toLocaleLowerCase()}.`, error);
+        showToast('Live updates are unavailable. Ask your portal administrator to enable Realtime, then refresh.');
+      }
+    });
 }
 
 document.querySelectorAll('.message-trigger').forEach((button) => {
@@ -485,6 +588,12 @@ document.querySelector('#portal-sign-out').addEventListener('click', () => {
 });
 document.querySelector('#mobile-sign-out').addEventListener('click', () => {
   window.portalAuth.signOut().catch((error) => showToast(`Could not sign out: ${error.message}`));
+});
+notificationLink.addEventListener('click', () => {
+  notificationCount = 0;
+  notificationLink.hidden = true;
+  notificationLink.setAttribute('aria-label', 'Project updates');
+  notificationLink.title = 'Project updates';
 });
 function updateClientNavigation() {
   const activeHash = window.location.hash || '#overview';

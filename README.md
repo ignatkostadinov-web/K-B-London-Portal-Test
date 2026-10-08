@@ -13,7 +13,7 @@ Authorization is enforced by Supabase Row Level Security (RLS), not by JavaScrip
 
 The sign-in page is `login.html`, with separate **Staff login** and **Customer login** choices. The browser uses only the Supabase project URL and public publishable key in `supabase/config.js`; never put a `service_role` or secret key in browser code. Disable public sign-ups and create/invite users through **Authentication → Users**.
 
-Run [`supabase/schema.sql`](./supabase/schema.sql) for a new project. Since the initial version has already been run in the configured project, run [`supabase/portal-upgrade.sql`](./supabase/portal-upgrade.sql) in the SQL Editor to add the portal fields and tighten file access. Confirm the selected Supabase project and take an appropriate backup before running production SQL.
+Run [`supabase/schema.sql`](./supabase/schema.sql) for a new project. Since the initial version has already been run in the configured project, run [`supabase/portal-upgrade.sql`](./supabase/portal-upgrade.sql) in the SQL Editor to add the portal fields and tighten file access. Run [`supabase/realtime-upgrade.sql`](./supabase/realtime-upgrade.sql) once to enable project changes to reach signed-in customers in real time. Confirm the selected Supabase project and take an appropriate backup before running production SQL.
 
 Create a project record before assigning customer accounts. For example:
 
@@ -41,7 +41,7 @@ Replace the example UUIDs before running either statement. Never run both exampl
 
 ## Project data and files
 
-Stage updates, issues, decisions, customer-safe updates, profiles, projects, and file metadata are stored in Supabase. Staff stage updates, photos, and project documents default to private. Staff must explicitly mark a stage update or file visible to the customer. Internal issues, correspondence, and attachments are staff-only; only the separate customer-safe update text is published.
+Stage updates, issues, decisions, customer-safe updates, profiles, projects, and file metadata are stored in Supabase. Staff stage updates, photos, and project documents default to private. Staff must explicitly mark a stage update or file visible to the customer. Internal issues, correspondence, and attachments are staff-only; only the separate customer-safe update text is published. The client portal subscribes to Realtime changes for the customer's assigned project, reloads its RLS-filtered data, and shows an in-portal alert for visible project, stage, decision, update, and shared-file changes. Customers need to be signed in with the portal open to receive live alerts; email and offline push notifications are not configured.
 
 The `project-files` Storage bucket is private. The app uses short-lived signed URLs for permitted files, and storage access is checked against both the project assignment and a matching `project_files` record. Never put customer photos/documents in a public bucket or website `assets/` folder.
 
@@ -53,7 +53,8 @@ Before inviting customers:
 2. Create project rows and user profiles; assign each customer only their own project.
 3. Sign in as staff and upload photos/documents through the staff portal.
 4. Test signed-out access, staff access, a customer's own project, another customer's project, shared files, and internal files, including opening a copied file URL after sign-out.
-5. Confirm backups, account access, and the real website origin/redirect allow-list.
+5. Sign in to a customer's portal in a second browser, update that project as staff, and verify shared changes appear with an in-portal alert. Confirm private stage updates, issues, and internal attachments do not appear.
+6. Confirm backups, account access, and the real website origin/redirect allow-list.
 
 ## Existing development preview and repository assets
 
